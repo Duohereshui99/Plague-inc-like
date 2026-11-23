@@ -1,0 +1,20 @@
+{
+  "name": "terminal-strain-build",
+  "version": "1.0.0",
+  "description": "终末菌株：地图数据构建与页面组装脚本",
+  "scripts": {
+    "build:map": "node build.mjs ne_50m_admin_0_countries.geojson 0.12",
+    "build": "node assemble.js",
+    "sim": "node sim.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3"
+  },
+  "private": true
+}

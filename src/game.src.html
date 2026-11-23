@@ -1,0 +1,831 @@
+<title>终末菌株</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=ZCOOL+QingKe+HuangYou&display=swap">
+<style>
+/* Layout: war-room monitor — phosphor world screen on the left; command stack (strain readout, evolution bank, comms log) on the right; stacks on phones */
+:root{
+  --bg:#040a06; --panel:#07120b; --panel2:#0b1a10; --line:#17402a;
+  --fg:#a8f5c0; --muted:#4f8f63; --phos:#39ff7a;
+  --amber:#ffb22e; --red:#ff3b3b; --cyan:#5ee6ff; --screen:#020604;
+  --f-display:"ZCOOL QingKe HuangYou","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --f-term:"VT323",ui-monospace,Menlo,Consolas,monospace;
+  --f-body:"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;background:radial-gradient(1100px 520px at 28% 0%,#0a1c11 0%,var(--bg) 62%),var(--bg)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,transparent 1px 3px)}
+.app{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--phos);outline-offset:2px}
+
+.panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:12px}
+.panel::before{content:"";position:absolute;inset:-1px;pointer-events:none;opacity:.85;background:
+  linear-gradient(var(--phos),var(--phos)) left top/14px 1px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) left top/1px 14px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) right top/14px 1px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) right top/1px 14px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) left bottom/14px 1px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) left bottom/1px 14px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) right bottom/14px 1px no-repeat,
+  linear-gradient(var(--phos),var(--phos)) right bottom/1px 14px no-repeat}
+.panel h2{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:.18em;margin:0 0 10px}
+.panel h2 b{color:var(--phos);font-weight:400;margin-right:6px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}
+.brand{display:flex;flex-direction:column;gap:3px;margin-right:auto;min-width:0}
+.brand-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;margin:0;letter-spacing:.14em;color:var(--phos);text-shadow:0 0 6px rgba(57,255,122,.65),0 0 20px rgba(57,255,122,.25)}
+.sub{font-size:12px;color:var(--muted);letter-spacing:.24em}
+.pname{font-family:var(--f-term);font-size:18px;line-height:1.2;color:var(--amber);border:1px solid rgba(255,178,46,.5);padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.readout{display:flex;align-items:baseline;gap:6px}
+.readout b{font-family:var(--f-term);font-size:34px;line-height:1;font-weight:400;color:var(--phos);text-shadow:0 0 8px rgba(57,255,122,.55);font-variant-numeric:tabular-nums}
+.readout.pts b{color:var(--amber);text-shadow:0 0 8px rgba(255,178,46,.55)}
+.lbl{font-size:12px;color:var(--muted);letter-spacing:.12em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;background:var(--panel)}
+.seg button{background:transparent;color:var(--muted);border:0;padding:6px 12px;font-family:var(--f-term);font-size:20px;line-height:1.1;cursor:pointer}
+.seg button.cn{font-family:var(--f-body);font-size:13px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--phos);color:#02110a}
+
+.status{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px 22px;padding:12px 14px}
+.row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:6px}
+.legend{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--muted)}
+.legend b,.row .lbl b{font-family:var(--f-term);font-size:20px;font-weight:400;color:var(--fg);margin-left:4px;font-variant-numeric:tabular-nums}
+.legend i{display:inline-block;width:9px;height:9px;margin-right:5px}
+.h{background:#1f9a4a} .i{background:linear-gradient(90deg,var(--amber),var(--red))} .d{background:#5a1a14} .c{background:var(--cyan);box-shadow:0 0 10px rgba(94,230,255,.6)}
+.bar{position:relative;height:12px;background:#0b1f13;display:flex;overflow:hidden;border-radius:1px}
+.bar::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 5px,var(--panel) 5px 7px)}
+.bar span{height:100%;transition:width .3s linear}
+.cureval{font-family:var(--f-term);font-size:24px;line-height:1;color:var(--cyan);text-shadow:0 0 8px rgba(94,230,255,.55);font-variant-numeric:tabular-nums}
+.note{font-family:var(--f-term);font-size:18px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:14px;align-items:start}
+.mapwrap{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mapbox{position:relative;overflow:hidden;background:var(--screen);border:1px solid var(--line);border-radius:2px}
+.mapbox::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,rgba(0,0,0,.32) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6) 100%)}
+.sweep{position:absolute;top:0;bottom:0;left:0;width:130px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(57,255,122,.05) 60%,rgba(57,255,122,.18) 96%,rgba(170,255,200,.75) 100%);will-change:transform}
+#map{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.mapstat{position:absolute;left:10px;top:6px;z-index:2;font-family:var(--f-term);font-size:18px;color:var(--phos);letter-spacing:.06em;pointer-events:none;text-shadow:0 0 6px rgba(57,255,122,.6)}
+.mapstat .blink{animation:blink 1.1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.zread{position:absolute;left:10px;bottom:4px;z-index:2;font-family:var(--f-term);font-size:17px;color:var(--muted);pointer-events:none}
+.zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.zoom button{width:32px;height:32px;border-radius:2px;border:1px solid var(--line);background:rgba(7,18,11,.88);color:var(--phos);font-family:var(--f-term);font-size:22px;line-height:1;cursor:pointer}
+.zoom button.cn{font-family:var(--f-body);font-size:12px}
+.zoom button:hover{border-color:var(--phos);box-shadow:0 0 8px rgba(57,255,122,.35)}
+.zoom button[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}
+.hint{position:absolute;top:36px;left:50%;transform:translateX(-50%);z-index:2;background:var(--amber);color:#1a0f00;padding:5px 14px;border-radius:2px;font-size:14px;font-weight:600;white-space:nowrap;box-shadow:0 0 18px rgba(255,178,46,.45);pointer-events:none;animation:bob 1.6s ease-in-out infinite;max-width:calc(100% - 70px);overflow:hidden;text-overflow:ellipsis}
+@keyframes bob{50%{transform:translate(-50%,4px)}}
+.maptools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.maptools select{background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:2px;padding:6px 8px;font:inherit;font-size:13px;max-width:100%}
+.mapfoot{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.mapfoot i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.sw-h{background:#0a1c11;outline:1px solid #2a8a4f}
+.sw-d{background:#160705;outline:1px solid #4a1c14}
+.sw-s{outline:2px solid var(--cyan)}
+.region{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:10px 12px;min-height:96px}
+.region h3{margin:0 0 6px;font-size:16px;font-weight:600;color:var(--phos);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tag{font-size:12px;color:var(--muted);font-weight:400}
+.region dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 12px;margin:0}
+.region dt{font-size:11px;color:var(--muted);letter-spacing:.08em}
+.region dd{margin:0;font-family:var(--f-term);font-size:20px;line-height:1.1;font-variant-numeric:tabular-nums}
+.region .gates{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.gates .shut{color:var(--cyan)}
+.toplist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 16px}
+.toplist li{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;cursor:pointer}
+.toplist li b{font-family:var(--f-term);font-size:18px;font-weight:400;color:var(--amber);font-variant-numeric:tabular-nums}
+.toplist li:hover span{color:var(--phos)}
+.region .empty{color:var(--muted);margin:0}
+
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.meters{display:grid;gap:9px}
+.m{display:grid;grid-template-columns:52px minmax(0,1fr) 34px;align-items:center;gap:8px}
+.m b{font-family:var(--f-term);font-size:20px;line-height:1;font-weight:400;text-align:right;font-variant-numeric:tabular-nums}
+.mbar{position:relative;height:9px;background:#0b1f13;overflow:hidden}
+.mbar::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 4px,var(--panel) 4px 6px)}
+.mbar span{display:block;height:100%;width:0;transition:width .3s}
+#mInf{background:var(--amber);box-shadow:0 0 8px rgba(255,178,46,.5)} #mSev{background:#ff7a3b} #mLeth{background:var(--red);box-shadow:0 0 8px rgba(255,59,59,.5)}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs button{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:2px;padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{background:var(--phos);color:#02110a;border-color:var(--phos)}
+.tabs small{font-family:var(--f-term);font-size:16px;margin-left:4px}
+.traits{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;max-height:440px;overflow:auto;padding-right:2px}
+.trait{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:9px 10px;color:var(--fg);font:inherit;cursor:pointer;align-content:start}
+.trait:hover{border-color:var(--phos);box-shadow:0 0 12px rgba(57,255,122,.14)}
+.tn{font-weight:600;font-size:14px}
+.tc{font-family:var(--f-term);font-size:19px;line-height:1.05;color:var(--amber);border:1px solid currentColor;border-radius:2px;padding:0 6px;align-self:center}
+.td{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.45}
+.tfx{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--phos)}
+.treq{grid-column:1/-1;font-size:11px;color:var(--amber)}
+.treq:empty{display:none}
+.trait.owned{border-color:var(--amber);background:linear-gradient(180deg,rgba(255,178,46,.13),transparent 70%),var(--panel2);cursor:default}
+.trait.owned .tn{color:var(--amber)}
+.trait.owned .tc{background:var(--amber);color:#1a0f00;border-color:var(--amber)}
+.trait.locked{opacity:.42;cursor:not-allowed}
+.trait.poor{cursor:not-allowed}
+.trait.poor .tc{color:var(--muted)}
+.log ol{list-style:none;margin:0;padding:0;max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:5px}
+.log li{font-size:13px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:baseline}
+.log li span{font-family:var(--f-term);font-size:17px;color:var(--muted)}
+.log li div::before{content:"> ";color:var(--muted)}
+.log li.inf{color:var(--amber)} .log li.close{color:var(--cyan)} .log li.cure{color:#d4fbff} .log li.dead{color:var(--red)}
+
+/* SVG map */
+.grat{fill:none;stroke:#0f3a22;stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+.sph{fill:none;stroke:#1d5a35;stroke-width:1;vector-effect:non-scaling-stroke;pointer-events:none}
+.ct{stroke:#2a8a4f;stroke-width:.6;vector-effect:non-scaling-stroke;cursor:pointer}
+.ct.inf{stroke:#ffcf7a;stroke-opacity:.6}
+.ct.gone{stroke:#4a1c14;stroke-opacity:1}
+.ct.sealed{stroke:var(--cyan);stroke-width:1.1;stroke-opacity:1}
+.ct.tiny{stroke-width:.8}
+.ct:hover{filter:brightness(1.5)}
+#hl{fill:none;stroke:#eafff0;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;filter:drop-shadow(0 0 3px #39ff7a)}
+.trail{fill:none;stroke-width:1.3;stroke-dasharray:3 4;vector-effect:non-scaling-stroke;pointer-events:none}
+.trail.air{stroke:var(--amber)} .trail.sea{stroke:var(--cyan)} .trail.land{stroke:var(--red)}
+.dot{pointer-events:none}
+.dot.air{fill:var(--amber)} .dot.sea{fill:var(--cyan)} .dot.land{fill:var(--red)}
+.ping{fill:rgba(255,178,46,.12);stroke:var(--amber);stroke-width:1.4;vector-effect:non-scaling-stroke;pointer-events:none}
+.ping.hi{fill:rgba(255,59,59,.14);stroke:var(--red)}
+.lb{font-family:var(--f-body);font-weight:500;fill:var(--fg);text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(2,6,4,.88);stroke-linejoin:round;stroke-width:calc(var(--u,1px)*2.6);font-size:calc(var(--u,1px)*10);opacity:.78}
+.lb.t0{font-size:calc(var(--u,1px)*13);opacity:.95;letter-spacing:.1em}
+.lb.t1{font-size:calc(var(--u,1px)*11.5);opacity:.88}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(2,6,4,.9);overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.card{max-width:480px;width:100%;display:flex;flex-direction:column;gap:14px;padding:22px}
+.card h2{font-family:var(--f-display);font-weight:400;font-size:42px;line-height:1.1;margin:0;color:var(--phos);letter-spacing:.14em;text-shadow:0 0 8px rgba(57,255,122,.6),0 0 24px rgba(57,255,122,.25);text-wrap:balance}
+.card p{margin:0;color:var(--fg)}
+.card label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);letter-spacing:.1em}
+.prompt{position:relative;display:block}
+.prompt::before{content:">";position:absolute;left:10px;top:50%;transform:translateY(-52%);color:var(--phos);font-family:var(--f-term);font-size:22px;pointer-events:none}
+.card input{width:100%;background:#03100a;border:1px solid var(--line);color:var(--phos);border-radius:2px;padding:7px 11px 7px 28px;font-family:var(--f-term);font-size:22px;letter-spacing:.04em}
+.card ol{margin:0;padding-left:20px;color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.card .seg{width:100%}
+.card .seg button{flex:1;padding:8px 6px}
+.go{background:var(--phos);color:#02110a;border:0;border-radius:2px;padding:12px;font:inherit;font-size:16px;font-weight:700;letter-spacing:.24em;cursor:pointer;box-shadow:0 0 18px rgba(57,255,122,.35)}
+.go:hover{background:#7dffa8}
+.endstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.endstats div{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:6px 10px}
+.endstats b{display:block;font-family:var(--f-term);font-size:24px;font-weight:400;line-height:1.1}
+.endstats span{font-size:11px;color:var(--muted)}
+.tip{font-size:13px;color:var(--amber)!important}
+
+@media (max-width:920px){.grid{grid-template-columns:1fr}.traits{max-height:none}}
+@media (max-width:640px){
+  .status{grid-template-columns:1fr}
+  h1{font-size:28px}
+  .readout b{font-size:28px}
+  .region dl{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hint{font-size:12px;top:32px}
+  .zoom button{width:30px;height:30px}
+  .mapstat{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){.hint,.mapstat .blink{animation:none}.bar span,.mbar span{transition:none}.sweep{display:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-row"><h1>终末菌株</h1><span class="pname" id="pname">菌株-07</span></div>
+      <div class="sub">全球疫情监测终端</div>
+    </div>
+    <div class="readout"><span class="lbl">第</span><b id="day">0</b><span class="lbl">天</span></div>
+    <div class="seg" role="group" aria-label="游戏速度">
+      <button type="button" class="cn" id="sp0" data-s="0">暂停</button>
+      <button type="button" id="sp1" data-s="1" aria-pressed="true">1×</button>
+      <button type="button" id="sp2" data-s="2">2×</button>
+      <button type="button" id="sp3" data-s="3">3×</button>
+    </div>
+    <div class="readout pts"><span class="lbl">变异点</span><b id="pts">0</b></div>
+  </header>
+
+  <section class="status panel" aria-label="全球状况">
+    <div>
+      <div class="row"><span class="lbl">世界人口 · 已波及<b id="nReached">0</b>/<span id="nAll">0</span> 个国家和地区</span>
+        <span class="legend"><span><i class="h"></i>健康<b id="gH">0</b></span><span><i class="i"></i>感染<b id="gI">0</b></span><span><i class="d"></i>死亡<b id="gD">0</b></span></span>
+      </div>
+      <div class="bar"><span id="bD" class="d"></span><span id="bI" class="i"></span><span id="bH" class="h"></span></div>
+    </div>
+    <div>
+      <div class="row"><span class="lbl">疫苗研发</span><span><span class="note" id="cureNote"></span> <span class="cureval" id="cureTxt">未启动</span></span></div>
+      <div class="bar"><span id="bC" class="c"></span></div>
+    </div>
+  </section>
+
+  <main class="grid">
+    <div class="mapwrap panel">
+      <div class="mapbox" id="mapbox">
+        <svg id="map" role="img" aria-label="世界地图，点击国家查看详情"></svg>
+        <div class="sweep" id="sweep"></div>
+        <div class="mapstat"><span class="blink">●</span> <span id="scanState">待命</span></div>
+        <div class="zread" id="zread">缩放 ×1.0</div>
+        <div class="zoom">
+          <button type="button" id="zin" aria-label="放大">+</button>
+          <button type="button" id="zout" aria-label="缩小">−</button>
+          <button type="button" class="cn" id="zreset" aria-label="显示全图">全</button>
+          <button type="button" class="cn" id="zlab" aria-label="显示国名" aria-pressed="true">名</button>
+        </div>
+        <div class="hint" id="hint" hidden>点击任意国家，放出零号感染者</div>
+      </div>
+      <div class="maptools">
+        <div class="mapfoot">
+          <span><i class="sw-h"></i>健康</span><span><i class="i"></i>感染（少→多）</span><span><i class="sw-d"></i>死亡</span><span><i class="sw-s"></i>全面封锁</span>
+          <span>滚轮或双指缩放，拖动平移</span>
+        </div>
+        <label class="lbl" for="csel" style="display:flex;gap:6px;align-items:center">找国家
+          <select id="csel"><option value="">选择…</option></select>
+        </label>
+      </div>
+      <div class="region" id="region"></div>
+    </div>
+
+    <aside class="side">
+      <div class="panel">
+        <h2><b>▍</b>菌株特征</h2>
+        <div class="meters">
+          <div class="m"><span class="lbl">感染力</span><div class="mbar"><span id="mInf"></span></div><b id="vInf">0</b></div>
+          <div class="m"><span class="lbl">严重度</span><div class="mbar"><span id="mSev"></span></div><b id="vSev">0</b></div>
+          <div class="m"><span class="lbl">致死率</span><div class="mbar"><span id="mLeth"></span></div><b id="vLeth">0</b></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2><b>▍</b>进化</h2>
+        <div class="tabs" role="tablist" aria-label="进化分类">
+          <button type="button" role="tab" data-tab="trans" aria-selected="true">传播<small id="cnt-trans"></small></button>
+          <button type="button" role="tab" data-tab="sym" aria-selected="false">症状<small id="cnt-sym"></small></button>
+          <button type="button" role="tab" data-tab="abil" aria-selected="false">能力<small id="cnt-abil"></small></button>
+        </div>
+        <div class="traits" id="traits"></div>
+      </div>
+      <div class="panel log">
+        <h2><b>▍</b>全球通讯</h2>
+        <ol id="log"></ol>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="overlay" id="startOv">
+  <div class="card panel">
+    <div class="sub">全球疫情监测终端 · 待命</div>
+    <h2>终末菌株</h2>
+    <p>你是一株刚刚出现的未知菌株。赶在人类研发出疫苗之前，扩散到全世界每一个国家。</p>
+    <label for="pathName">给菌株命名
+      <span class="prompt"><input id="pathName" maxlength="16" value="菌株-07" autocomplete="off"></span>
+    </label>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">难度</div>
+      <div class="seg" role="group" aria-label="难度" id="diffSeg">
+        <button type="button" class="cn" data-d="casual" aria-pressed="true">休闲</button>
+        <button type="button" class="cn" data-d="normal">标准</button>
+        <button type="button" class="cn" data-d="hard">困难</button>
+      </div>
+    </div>
+    <ol>
+      <li>在世界地图上点一个国家，放出零号感染者。</li>
+      <li>传播和死亡会带来变异点，用来进化传播途径、症状和能力。</li>
+      <li>症状越重越容易被察觉，各国会关闭机场、港口和边境，疫苗研发也会加快。</li>
+      <li>所有人类消失你就赢了；疫苗研发到 100% 或菌株灭绝你就输了。</li>
+    </ol>
+    <button type="button" class="go" id="startBtn">释放菌株</button>
+  </div>
+</div>
+
+<div class="overlay" id="endOv" hidden>
+  <div class="card panel">
+    <div class="sub">全球疫情监测终端 · 监测结束</div>
+    <h2 id="endTitle">结束</h2>
+    <p id="endText"></p>
+    <div class="endstats">
+      <div><b id="eDay">0</b><span>天数</span></div>
+      <div><b id="eDead">0</b><span>死亡人数</span></div>
+      <div><b id="eCure">0%</b><span>疫苗进度</span></div>
+    </div>
+    <p class="tip" id="endTip"></p>
+    <button type="button" class="go" id="againBtn">再来一局</button>
+  </div>
+</div>
+
+<script>
+const WORLD=__WORLD__;
+/*SIM-START*/
+const C=WORLD.c.map(o=>({name:o.n,pop:o.p,w:o.w,cl:o.cl,x:o.x,y:o.y,nb:o.nb,coast:!!o.c,area:o.a,d:o.d}));
+const N=C.length;
+const TOTAL=C.reduce((a,r)=>a+r.pop,0);
+const AIRW=C.map(r=>Math.sqrt(r.pop)*(0.3+r.w));
+const AIRW_SUM=AIRW.reduce((a,b)=>a+b,0);
+const SEAW=C.map((r,i)=>r.coast?AIRW[i]:0);
+const SEAW_SUM=SEAW.reduce((a,b)=>a+b,0);
+const TRAITS=[
+  {tab:'trans',id:'air1',name:'气溶胶 I',cost:9,req:[],fx:{inf:3,air:1},desc:'借空气飘散，在富裕城市和航班上传播更快。'},
+  {tab:'trans',id:'air2',name:'气溶胶 II',cost:15,req:['air1'],fx:{inf:5,air:1},desc:'微粒更轻，能在机舱空调循环里存活。'},
+  {tab:'trans',id:'wat1',name:'水源 I',cost:9,req:[],fx:{inf:3,water:1},desc:'在水中存活，贫困地区和海运更易传播。'},
+  {tab:'trans',id:'wat2',name:'水源 II',cost:14,req:['wat1'],fx:{inf:5,water:1},desc:'耐受净水处理，货轮压舱水成了温床。'},
+  {tab:'trans',id:'ins1',name:'蚊媒 I',cost:10,req:[],fx:{inf:3,insect:1},desc:'借蚊虫叮咬传播，炎热地区效果最好。'},
+  {tab:'trans',id:'ins2',name:'蚊媒 II',cost:16,req:['ins1'],fx:{inf:5,insect:1},desc:'适应更多虫种，陆路跨境扩散加快。'},
+  {tab:'trans',id:'liv1',name:'禽畜 I',cost:8,req:[],fx:{inf:2,live:1},desc:'在家禽家畜间流行，农村地区更易传播。'},
+  {tab:'trans',id:'liv2',name:'禽畜 II',cost:13,req:['liv1'],fx:{inf:4,live:1},desc:'跨物种跳跃更容易，随牲畜贸易跨境。'},
+  {tab:'trans',id:'ext',name:'全域传播',cost:24,req:['air2','wat2'],fx:{inf:8,air:1,water:1},desc:'空气和水源两条路同时强化，跨洲传播大增。'},
+  {tab:'sym',id:'cough',name:'咳嗽',cost:4,req:[],fx:{inf:3,sev:1},desc:'飞沫增多，传播加快，几乎不引人注意。'},
+  {tab:'sym',id:'rash',name:'皮疹',cost:3,req:[],fx:{inf:2,sev:1},desc:'接触传播增加，症状轻微。'},
+  {tab:'sym',id:'insom',name:'失眠',cost:3,req:[],fx:{sev:2},desc:'患者疲惫不堪，对传播帮助不大。'},
+  {tab:'sym',id:'fever',name:'发热',cost:6,req:['cough|rash'],fx:{inf:2,sev:3,leth:1},desc:'体温升高，开始出现零星死亡。'},
+  {tab:'sym',id:'sneeze',name:'喷嚏',cost:6,req:['cough'],fx:{inf:5,sev:2},desc:'一个喷嚏就能感染一整节车厢。'},
+  {tab:'sym',id:'vomit',name:'呕吐',cost:7,req:['fever'],fx:{inf:4,sev:3,leth:1},desc:'污染水和食物，传播与致死都上升。'},
+  {tab:'sym',id:'pneu',name:'肺炎',cost:10,req:['sneeze|fever'],fx:{inf:3,sev:4,leth:3},desc:'呼吸道严重受损，重症开始增多。'},
+  {tab:'sym',id:'organ',name:'器官衰竭',cost:18,req:['vomit'],fx:{sev:8,leth:8},desc:'致死率大幅上升，各国会迅速警觉。'},
+  {tab:'sym',id:'coma',name:'昏迷',cost:15,req:['pneu|insom'],fx:{sev:6,leth:6},desc:'患者失去意识，医疗系统不堪重负。'},
+  {tab:'sym',id:'hemo',name:'全身出血',cost:22,req:['organ'],fx:{inf:6,sev:10,leth:10},desc:'极其致命，血液也成了传播途径。'},
+  {tab:'sym',id:'total',name:'系统崩溃',cost:30,req:['hemo','coma'],fx:{sev:12,leth:18},desc:'终极症状。感染者很快死亡。'},
+  {tab:'abil',id:'cold1',name:'耐寒 I',cost:8,req:[],fx:{cold:1},desc:'在寒冷国家存活得更好。'},
+  {tab:'abil',id:'cold2',name:'耐寒 II',cost:14,req:['cold1'],fx:{cold:1},desc:'严寒不再是阻碍。'},
+  {tab:'abil',id:'heat1',name:'耐热 I',cost:8,req:[],fx:{heat:1},desc:'在炎热国家存活得更好。'},
+  {tab:'abil',id:'heat2',name:'耐热 II',cost:14,req:['heat1'],fx:{heat:1},desc:'酷暑不再是阻碍。'},
+  {tab:'abil',id:'drug1',name:'抗药 I',cost:10,req:[],fx:{drug:1},desc:'普通药物效果下降，富裕国家更难压制。'},
+  {tab:'abil',id:'drug2',name:'抗药 II',cost:16,req:['drug1'],fx:{drug:1},desc:'抵抗多数抗生素和抗病毒药。'},
+  {tab:'abil',id:'drug3',name:'抗药 III',cost:24,req:['drug2'],fx:{drug:1},desc:'现代医疗几乎无效。'},
+  {tab:'abil',id:'camo1',name:'基因伪装 I',cost:12,req:[],fx:{camo:1},desc:'更晚被人类察觉，研发启动推迟。'},
+  {tab:'abil',id:'camo2',name:'基因伪装 II',cost:20,req:['camo1'],fx:{camo:1},desc:'检测试剂经常漏检。'},
+  {tab:'abil',id:'shuf1',name:'基因重组 I',cost:15,req:[],fx:{shuf:1},desc:'疫苗进度倒退 6%，之后研发变慢。'},
+  {tab:'abil',id:'shuf2',name:'基因重组 II',cost:22,req:['shuf1'],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发继续变慢。'},
+  {tab:'abil',id:'shuf3',name:'基因重组 III',cost:30,req:['shuf2'],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发大幅变慢。'}
+];
+const DIFF={casual:{name:'休闲',cure:.65,aware:.7,pts:10,spare:1e6},normal:{name:'标准',cure:1,aware:1,pts:6,spare:1e5},hard:{name:'困难',cure:1.8,aware:1.4,pts:4,spare:0}};
+const TR={}; TRAITS.forEach(t=>TR[t.id]=t);
+const GMS=[100,1e3,1e4,1e5,1e6,1e7,1e8,1e9];
+const DEATH_MS=[[1e6,'全球死亡人数突破一百万'],[1e8,'全球死亡人数突破一亿'],[1e9,'全球死亡人数突破十亿'],[3e9,'世界人口已减少三成以上'],[6e9,'人类文明濒临崩溃']];
+const CURE_MS=[25,50,75,90];
+let S=null;
+
+function newGame(name,diff){
+  S={name:name||'菌株-07',diff,day:0,pts:DIFF[diff].pts,acc:0,started:false,over:false,result:null,speed:1,
+    traits:new Set(),research:false,aware:0,cure:0,cms:0,dms:0,gms:0,reachedN:0,
+    c:C.map(r=>({H:r.pop,I:0,D:0,air:true,port:r.coast,border:true,reached:false,alarm:0})),
+    log:[],logDirty:true,fx:[],tab:'trans',sel:null};
+}
+function news(text,kind){S.log.unshift({d:S.day,text,kind:kind||''});if(S.log.length>80)S.log.pop();S.logDirty=true;}
+function stats(){
+  const s={inf:0,sev:0,leth:0,air:0,water:0,insect:0,live:0,heat:0,cold:0,drug:0,camo:0,shuf:0};
+  for(const id of S.traits){const fx=TR[id].fx;for(const k in fx)s[k]+=fx[k];}
+  return s;
+}
+function unlocked(t){return t.req.every(q=>q.split('|').some(x=>S.traits.has(x)));}
+function canBuy(t){return !S.over&&!S.traits.has(t.id)&&unlocked(t)&&S.pts>=t.cost;}
+function buy(id){
+  const t=TR[id]; if(!canBuy(t))return false;
+  S.pts-=t.cost; S.traits.add(id);
+  if(t.fx.shuf){S.cure=Math.max(0,S.cure-6);}
+  if(S.started){
+    if(t.tab==='sym'){
+      let top=-1; for(let i=0;i<N;i++){if(S.c[i].I>=1&&(top<0||S.c[i].I>S.c[top].I))top=i;}
+      news(top>=0?`${C[top].name} 报告大量「${t.name}」病例`:`${S.name} 进化出「${t.name}」`,'inf');
+    } else if(t.fx.shuf&&S.research){news(`${S.name} 发生基因重组，疫苗研究被迫返工`,'cure');}
+  }
+  return true;
+}
+function seed(j,i,how){
+  const t=S.c[j];
+  const n=Math.min(2,t.H); t.I+=n; t.H-=n;
+  if(!t.reached){
+    t.reached=true; S.reachedN++;
+    if(C[j].pop>=1e7)S.pts++; else S.acc+=0.25;
+    if(C[j].pop>=1e7||S.reachedN<=12)news(`${C[j].name} 出现首例感染，经${how==='air'?'航班':how==='sea'?'海运':'陆路'}自${C[i].name}传入`,'inf');
+  }
+  S.fx.push({from:i,to:j,how});
+}
+function pick(W,gate,self){
+  let tot=0;
+  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;tot+=W[j]*(t[gate]?1:0.03);}
+  if(tot<=0)return -1;
+  let x=Math.random()*tot;
+  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;x-=W[j]*(t[gate]?1:0.03);if(x<=0)return j;}
+  return -1;
+}
+function startAt(i){
+  const r=S.c[i]; r.I=20; r.H-=20; r.reached=true; S.reachedN=1; S.started=true;
+  news(`${C[i].name} 出现第一位感染者，${S.name} 开始扩散`,'inf');
+}
+function step(){
+  if(!S||!S.started||S.over)return;
+  S.day++;
+  const st=stats(),X=S.c,d=DIFF[S.diff];
+  const lethRate=st.leth*0.004;
+  let nI=0,nD=0;
+  for(let i=0;i<N;i++){
+    const r=X[i],c=C[i];
+    if(r.I<=0)continue;
+    let cf=1;
+    if(c.cl==='hot')cf=0.62+0.19*Math.min(2,st.heat)+0.08*st.insect;
+    else if(c.cl==='cold')cf=0.62+0.19*Math.min(2,st.cold);
+    cf=Math.min(1.15,cf);
+    const wf=1-c.w*0.5*(1-Math.min(3,st.drug)/3);
+    const tf=1+st.air*0.12*c.w+st.water*0.12*(1-c.w)+st.insect*(c.cl==='hot'?0.12:0.04)+st.live*0.1*(1-c.w);
+    const beta=(0.24+0.03*st.inf)*cf*wf*tf;
+    const alive=r.H+r.I;
+    const ni=Math.min(r.H,r.I*beta*(r.H/alive));
+    let nd=r.I*lethRate*(1-c.w*0.25);
+    if(r.H<1&&st.leth>0)nd=Math.max(nd,lethRate*3e5);
+    nd=Math.min(nd,r.I);
+    r.H-=ni; r.I+=ni-nd; r.D+=nd;
+    if(r.H<0.5)r.H=0;
+    if(r.I<0.5)r.I=0;
+    nI+=ni; nD+=nd;
+  }
+  let airAvail=0,seaAvail=0,sI0=0,src=0;
+  for(let j=0;j<N;j++){
+    const t=X[j]; sI0+=t.I; if(t.I>X[src].I)src=j;
+    if(t.I>=1||t.H<1)continue;
+    airAvail+=AIRW[j]*(t.air?1:0.03);
+    if(SEAW[j])seaAvail+=SEAW[j]*(t.port?1:0.03);
+  }
+  const airF=airAvail/AIRW_SUM,seaF=seaAvail/SEAW_SUM;
+  for(let i=0;i<N;i++){
+    const r=X[i],c=C[i]; if(r.I<1)continue;
+    const f=r.I/c.pop;
+    for(const j of c.nb){
+      const t=X[j]; if(t.I>=1||t.H<1)continue;
+      let k=(0.5*f+r.I/2.5e7)*(1+0.5*st.live+0.4*st.insect+0.02*st.inf);
+      if(!r.border||!t.border)k*=0.04;
+      if(Math.random()<1-Math.exp(-k))seed(j,i,'land');
+    }
+    if(airAvail>0){
+      const la=(0.04*f*(0.3+c.w)+r.I/4e7)*(1+0.9*st.air)*(r.air?1:0.03)*airF;
+      if(Math.random()<1-Math.exp(-la)){const j=pick(AIRW,'air',i);if(j>=0)seed(j,i,'air');}
+    }
+    if(c.coast&&seaAvail>0){
+      const ls=(0.03*f+r.I/6e7)*(1+0.9*st.water)*(r.port?1:0.03)*seaF;
+      if(Math.random()<1-Math.exp(-ls)){const j=pick(SEAW,'port',i);if(j>=0)seed(j,i,'sea');}
+    }
+  }
+  const F=sI0/TOTAL;
+  if(F>0.02){
+    for(let j=0;j<N;j++){
+      const t=X[j]; if(t.I>=1||t.H<1)continue;
+      const p=0.03*F*(1+0.4*st.air+0.4*st.water)*((t.air||t.port)?1:0.3);
+      if(Math.random()<p)seed(j,src,C[j].coast&&Math.random()<0.4?'sea':'air');
+    }
+  }
+  let sH=0,sI=0,sD=0;
+  for(const r of X){sH+=r.H;sI+=r.I;sD+=r.D;}
+  for(let i=0;i<N;i++){
+    const r=X[i],c=C[i];
+    r.alarm=Math.min(1,(r.I/c.pop)*(0.1+st.sev*0.06)+(r.D/c.pop)*10+(S.research?S.cure/100*0.25:0));
+    if(!S.research)continue;
+    const a=r.alarm*d.aware,big=c.pop>=5e7;
+    if(r.air&&a>0.12-c.w*0.08){r.air=false;if(big)news(`${c.name} 关闭了全部机场`,'close');}
+    if(r.port&&a>0.18-c.w*0.1){r.port=false;if(big)news(`${c.name} 关闭了港口`,'close');}
+    if(r.border&&a>0.28-c.w*0.12){r.border=false;if(big)news(`${c.name} 封锁了陆地边境`,'close');}
+  }
+  if(!S.research){
+    let a=0; for(let i=0;i<N;i++)a+=X[i].I*(0.5+st.sev)*(0.4+C[i].w)/1.5e7;
+    a*=(1-0.3*Math.min(2,st.camo));
+    a+=nD/2e4+(sI/TOTAL)*3*(1-0.25*Math.min(2,st.camo));
+    S.aware+=a*d.aware;
+    if(S.aware>=100){S.research=true;news('国际卫生组织确认出现新型病原体，全球疫苗研发启动','cure');}
+  } else {
+    let work=0,base=0; for(let i=0;i<N;i++){work+=(X[i].H+0.7*X[i].I)*C[i].w;base+=C[i].pop*C[i].w;}
+    const panic=Math.min(1,sD/TOTAL*4+(sI/TOTAL)*st.sev*0.03);
+    const rate=0.7*(work/base)*(1+st.sev*0.025)*(1+panic)*d.cure/(1+0.4*st.shuf);
+    S.cure=Math.min(100,S.cure+rate);
+    while(S.cms<CURE_MS.length&&S.cure>=CURE_MS[S.cms]){news(`疫苗研发进度达到 ${CURE_MS[S.cms]}%`,'cure');S.cms++;}
+  }
+  while(S.dms<DEATH_MS.length&&sD>=DEATH_MS[S.dms][0]){news(DEATH_MS[S.dms][1],'dead');S.dms++;}
+  while(S.gms<GMS.length&&sI+sD>=GMS[S.gms]){S.gms++;S.pts+=2;}
+  S.acc+=nI/6e7+nD/4e7+0.12;
+  while(S.acc>=1){S.acc-=1;S.pts++;}
+  if(sH<1&&sI<1){S.over=true;S.result='win';}
+  else if(sI<1&&sH<d.spare&&S.cure<100){S.over=true;S.result='nearwin';S.survivors=sH;}
+  else if(S.cure>=100){S.over=true;S.result='cure';news('疫苗完成，开始在全球分发','cure');}
+  else if(sI<1){S.over=true;S.result='extinct';news(`最后一名感染者已不在，${S.name} 灭绝了`,'');}
+}
+/*SIM-END*/
+
+const $=s=>document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const svg=$('#map'),sweepEl=$('#sweep');
+const W=WORLD.w,H=WORLD.h;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let shapes=[],fxLayer=null,hl=null,flights=[],pings=[],waitingStart=false,selDiff='casual',lastSpeed=1,mapW=0;
+let lastDay=-1,lastPts=-1;
+const vb={x:0,y:0,w:W,h:H};
+
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function fmt(n){n=Math.max(0,n);if(n>=1e8)return (n/1e8).toFixed(2)+'亿';if(n>=1e4)return (n/1e4).toFixed(n>=1e6?0:1)+'万';return String(Math.round(n));}
+
+const HC=[10,28,17],AC=[255,178,46],RC=[255,59,59],DC=[22,7,5];
+function mix(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+function fillFor(i){
+  const r=S.c[i],p=C[i].pop;
+  if(r.I<1&&r.D<1)return 'rgb(10,28,17)';
+  const fd=r.D/p,alive=Math.max(1,r.H+r.I);
+  let col=HC;
+  if(r.I>=1){const t=Math.min(1,Math.sqrt(r.I/alive));col=t<0.5?mix(HC,AC,0.4+1.2*t):mix(AC,RC,(t-0.5)*2);}
+  col=mix(col,DC,Math.min(1,fd));
+  return `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`;
+}
+
+function buildMap(){
+  svg.innerHTML='';shapes=[];
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  el('rect',{x:-50,y:-50,width:W+100,height:H+100,fill:'#020604'},svg);
+  if(WORLD.g)el('path',{d:WORLD.g,class:'grat'},svg);
+  if(WORLD.o)el('path',{d:WORLD.o,class:'sph'},svg);
+  const cg=el('g',{},svg);
+  const dg=el('g',{},svg);
+  C.forEach((c,i)=>{
+    const s={};
+    if(c.d){s.p=el('path',{d:c.d,class:'ct','data-i':i},cg);el('title',{},s.p).textContent=c.name;}
+    if(c.area<6){s.dot=el('circle',{cx:c.x,cy:c.y,r:2.4,class:'ct tiny','data-i':i},dg);el('title',{},s.dot).textContent=c.name;}
+    shapes.push(s);
+  });
+  labelG=el('g',{class:'labels'},svg);labels=[];
+  C.forEach((c,i)=>{
+    const tier=c.area>2500?0:c.area>250?1:2,tiny=c.area<6;
+    const t=el('text',{x:c.x,y:c.y,class:'lb t'+tier},labelG);
+    if(tiny)t.setAttribute('dy','-1.05em');
+    t.textContent=c.name;labels.push({t,tier,tiny,min:99,v:true});
+  });
+  hl=el('path',{id:'hl',d:''},svg);
+  fxLayer=el('g',{},svg);
+}
+function paintMap(){
+  for(let i=0;i<N;i++){
+    const s=shapes[i],f=fillFor(i),r=S.c[i];
+    const sealed=!r.air&&!r.border&&(!C[i].coast||!r.port);
+    const inf=r.I>=1,gone=r.H+r.I<1&&r.D>0;
+    for(const e of [s.p,s.dot]){
+      if(!e)continue;
+      e.setAttribute('fill',f);
+      e.classList.toggle('inf',inf);e.classList.toggle('gone',gone);e.classList.toggle('sealed',sealed);
+    }
+  }
+}
+
+function applyVB(){svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);$('#zread').textContent=`缩放 ×${(W/vb.w).toFixed(1)}`;updateLabels();}
+let labelG=null,labels=[],showLabels=true,layoutW=0;
+const TIER_PX=[13,11.5,10],ZL=[1,1.5,2.25,3.4,5,7.5,12];
+function mapPxWidth(){return svg.getBoundingClientRect().width||svg.clientWidth||800;}
+function layoutLabels(){
+  const cw=mapPxWidth();layoutW=cw;
+  const order=C.map((c,i)=>i).sort((a,b)=>(C[b].area+C[b].pop/2e6)-(C[a].area+C[a].pop/2e6));
+  labels.forEach(l=>l.min=99);
+  const boxOf=(i,s)=>{const l=labels[i],fp=TIER_PX[l.tier],w=C[i].name.length*fp*(l.tier===0?1.1:1.02)+4,h=fp*1.25;
+    const cx=C[i].x*s,cy=C[i].y*s-(l.tiny?fp*1.05:0);return [cx-w/2,cy-h/2,cx+w/2,cy+h/2];};
+  ZL.forEach((z,zi)=>{
+    const s=cw/W*z,boxes=[],last=zi===ZL.length-1;
+    for(const i of order)if(labels[i].min<z)boxes.push(boxOf(i,s));
+    for(const i of order){
+      const l=labels[i];if(l.min<z)continue;
+      const b=boxOf(i,s);
+      let ok=true;for(const o of boxes){if(b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]){ok=false;break;}}
+      if(ok||last){boxes.push(b);l.min=z;}
+    }
+  });
+}
+function updateLabels(){
+  if(!labelG)return;
+  const z=W/vb.w,unit=vb.w/mapPxWidth();
+  labelG.style.setProperty('--u',unit+'px');
+  labelG.style.display=showLabels?'':'none';
+  for(const l of labels){const v=l.min<=z*1.001;if(v!==l.v){l.v=v;l.t.style.display=v?'':'none';}}
+}
+function clampVB(){vb.w=Math.min(W,Math.max(W/12,vb.w));vb.h=vb.w*H/W;vb.x=Math.min(W-vb.w,Math.max(0,vb.x));vb.y=Math.min(H-vb.h,Math.max(0,vb.y));}
+function zoomAt(f,px,py){const nw=Math.min(W,Math.max(W/12,vb.w/f)),k=nw/vb.w;vb.x=px-(px-vb.x)*k;vb.y=py-(py-vb.y)*k;vb.w=nw;vb.h=nw*H/W;clampVB();applyVB();}
+function toSvg(cx,cy){const rc=svg.getBoundingClientRect();return [vb.x+(cx-rc.left)/rc.width*vb.w,vb.y+(cy-rc.top)/rc.height*vb.h];}
+function focusOn(i){const c=C[i];if(vb.w>W/2.5){vb.w=W/2.5;vb.h=vb.w*H/W;}vb.x=c.x-vb.w/2;vb.y=c.y-vb.h/2;clampVB();applyVB();}
+svg.addEventListener('wheel',e=>{e.preventDefault();const [x,y]=toSvg(e.clientX,e.clientY);zoomAt(e.deltaY<0?1.25:0.8,x,y);},{passive:false});
+const ptrs=new Map();let drag=null,moved=false,pinch=null;
+svg.addEventListener('pointerdown',e=>{
+  try{svg.setPointerCapture(e.pointerId);}catch(_){}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){moved=false;drag={x:e.clientX,y:e.clientY,vx:vb.x,vy:vb.y};}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,w:vb.w};drag=null;moved=true;}
+});
+svg.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId))return;
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2&&pinch){
+    const [a,b]=[...ptrs.values()],dd=Math.hypot(a.x-b.x,a.y-b.y)||1;
+    const [mx,my]=toSvg((a.x+b.x)/2,(a.y+b.y)/2);
+    zoomAt(vb.w/(pinch.w*pinch.d/dd),mx,my);return;
+  }
+  if(drag){
+    const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+    if(!moved&&Math.hypot(dx,dy)<6)return;
+    moved=true;const rc=svg.getBoundingClientRect();
+    vb.x=drag.vx-dx/rc.width*vb.w;vb.y=drag.vy-dy/rc.height*vb.h;clampVB();applyVB();
+  }
+});
+function endPtr(e,click){
+  const wasMoved=moved;ptrs.delete(e.pointerId);
+  if(ptrs.size<2)pinch=null;
+  if(ptrs.size===0){
+    drag=null;
+    if(click&&!wasMoved){
+      const t=document.elementFromPoint(e.clientX,e.clientY);
+      const g=t&&t.closest?t.closest('[data-i]'):null;
+      if(g)onCountry(+g.dataset.i,false);
+    }
+  }
+}
+svg.addEventListener('pointerup',e=>endPtr(e,true));
+svg.addEventListener('pointercancel',e=>endPtr(e,false));
+$('#zin').addEventListener('click',()=>zoomAt(1.5,vb.x+vb.w/2,vb.y+vb.h/2));
+$('#zout').addEventListener('click',()=>zoomAt(1/1.5,vb.x+vb.w/2,vb.y+vb.h/2));
+$('#zreset').addEventListener('click',()=>{vb.x=0;vb.y=0;vb.w=W;vb.h=H;applyVB();});
+
+function spawnFlight(f){
+  const A=C[f.from],B=C[f.to];
+  const dist=Math.hypot(B.x-A.x,B.y-A.y);
+  const mx=(A.x+B.x)/2,my=(A.y+B.y)/2-(f.how==='land'?dist*0.1:dist*0.3);
+  const path=el('path',{d:`M${A.x},${A.y} Q${mx},${my} ${B.x},${B.y}`,class:'trail '+f.how},fxLayer);
+  const dot=el('circle',{r:3,class:'dot '+f.how,cx:A.x,cy:A.y},fxLayer);
+  flights.push({A,B,mx,my,path,dot,t:reduceMotion?1:0});
+  if(flights.length>40){const o=flights.shift();o.path.remove();o.dot.remove();}
+}
+function animFlights(dt){
+  for(let k=flights.length-1;k>=0;k--){
+    const f=flights[k];f.t+=dt/1.3;const t=Math.min(1,f.t),u=1-t;
+    f.dot.setAttribute('cx',u*u*f.A.x+2*u*t*f.mx+t*t*f.B.x);
+    f.dot.setAttribute('cy',u*u*f.A.y+2*u*t*f.my+t*t*f.B.y);
+    f.path.style.opacity=Math.max(0,1-Math.max(0,f.t-0.6));
+    if(f.t>=1.9){f.path.remove();f.dot.remove();flights.splice(k,1);}
+  }
+}
+function clearFx(){flights.forEach(f=>{f.path.remove();f.dot.remove();});flights=[];pings.forEach(p=>p.e.remove());pings=[];}
+
+/* radar sweep: a phosphor scan line crosses the screen; infected countries return an echo as it passes */
+const SWEEP_SECONDS=4.5;let sweepT=0,prevSX=null;
+function ping(i){
+  if(pings.length>70)return;
+  const r=S.c[i],s=Math.min(1,Math.sqrt(r.I/Math.max(1,r.H+r.I)));
+  pings.push({e:el('circle',{cx:C[i].x,cy:C[i].y,r:0,class:'ping'+(s>0.5?' hi':'')},fxLayer),t:0,s});
+}
+function sweepTick(dt,moving){
+  if(reduceMotion)return;
+  const w=mapW||mapPxWidth();
+  if(moving)sweepT=(sweepT+dt/SWEEP_SECONDS)%1;
+  const edge=sweepT*(w+130);
+  sweepEl.style.transform=`translateX(${edge-130}px)`;
+  const sx=vb.x+edge/w*vb.w;
+  if(moving&&prevSX!==null&&sx>prevSX&&S.started&&!S.over){
+    for(let i=0;i<N;i++){if(S.c[i].I>=1&&C[i].x>prevSX&&C[i].x<=sx)ping(i);}
+  }
+  prevSX=sx;
+}
+function animPings(dt){
+  const unit=vb.w/(mapW||mapPxWidth());
+  for(let k=pings.length-1;k>=0;k--){
+    const p=pings[k];p.t+=dt/1.5;
+    if(p.t>=1){p.e.remove();pings.splice(k,1);continue;}
+    p.e.setAttribute('r',(3+(9+12*p.s)*p.t)*unit);
+    p.e.style.opacity=String(1-p.t);
+  }
+}
+
+function fxText(fx){
+  const L={inf:'感染',sev:'严重',leth:'致死'};const out=[];
+  for(const k of ['inf','sev','leth'])if(fx[k])out.push(`${L[k]} +${fx[k]}`);
+  if(fx.air)out.push('空气传播');if(fx.water)out.push('水源传播');if(fx.insect)out.push('蚊虫传播');if(fx.live)out.push('禽畜传播');
+  if(fx.heat)out.push('炎热国家');if(fx.cold)out.push('寒冷国家');if(fx.drug)out.push('富裕国家');if(fx.camo)out.push('察觉变慢');if(fx.shuf)out.push('研发变慢');
+  return out.join(' · ');
+}
+function renderTraits(){
+  const box=$('#traits');box.innerHTML='';
+  TRAITS.filter(t=>t.tab===S.tab).forEach(t=>{
+    const b=document.createElement('button');b.type='button';b.className='trait';b.dataset.id=t.id;b.id='t-'+t.id;
+    b.innerHTML=`<span class="tn">${t.name}</span><span class="tc">${t.cost}</span><span class="td">${t.desc}</span><span class="tfx">${fxText(t.fx)}</span><span class="treq"></span>`;
+    b.addEventListener('click',()=>{if(buy(t.id)){updateTraits();render(true);}});
+    box.appendChild(b);
+  });
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===S.tab)));
+  updateTraits();
+}
+function updateTraits(){
+  for(const b of $('#traits').children){
+    const t=TR[b.dataset.id],owned=S.traits.has(t.id),unl=unlocked(t);
+    b.classList.toggle('owned',owned);b.classList.toggle('locked',!owned&&!unl);b.classList.toggle('poor',!owned&&unl&&S.pts<t.cost);
+    b.setAttribute('aria-disabled',String(!canBuy(t)));
+    b.querySelector('.treq').textContent=owned?'已进化':!unl?'需要：'+t.req.map(q=>q.split('|').map(x=>TR[x].name).join(' 或 ')).join('，'):S.pts<t.cost?`还差 ${t.cost-S.pts} 点`:'';
+  }
+  for(const tab of ['trans','sym','abil']){
+    const all=TRAITS.filter(t=>t.tab===tab);$('#cnt-'+tab).textContent=`${all.filter(t=>S.traits.has(t.id)).length}/${all.length}`;
+  }
+}
+function renderLog(){
+  const ol=$('#log');
+  ol.innerHTML=S.log.length?S.log.map(e=>`<li class="${e.kind}"><span>D+${e.d}</span><div>${e.text}</div></li>`).join(''):'<li><span>D+0</span><div>全球一切如常。</div></li>';
+  S.logDirty=false;
+}
+function renderRegion(){
+  const box=$('#region');
+  if(S.sel==null){
+    const X=S.c;let air=0,border=0,portShut=0;
+    X.forEach((r,i)=>{if(!r.air)air++;if(!r.border)border++;if(C[i].coast&&!r.port)portShut++;});
+    const ports=C.filter(c=>c.coast).length;
+    const top=X.map((r,i)=>[i,r.I+r.D]).filter(a=>a[1]>=1).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    box.innerHTML=top.length?`<h3>受影响最重的国家<span class="tag">已封锁：机场 ${air} · 港口 ${portShut}/${ports} · 边境 ${border}</span></h3><ul class="toplist">${top.map(([i,v])=>`<li data-ci="${i}"><span>${C[i].name}</span><b>${fmt(v)}</b></li>`).join('')}</ul>`
+      :'<p class="empty">点击地图上的国家查看详情，也可以用上方的「找国家」列表。</p>';
+    box.querySelectorAll('[data-ci]').forEach(li=>li.addEventListener('click',()=>onCountry(+li.dataset.ci,true)));
+    return;
+  }
+  const r=S.c[S.sel],c=C[S.sel];
+  const cl={hot:'炎热',cold:'寒冷',mild:'温和'}[c.cl];
+  const w=c.w>=.8?'高收入':c.w>=.5?'中高收入':c.w>=.3?'中低收入':'低收入';
+  const gate=(ok,name)=>ok?`${name}开放`:`<span class="shut">${name}关闭</span>`;
+  box.innerHTML=`<h3>${c.name}<span class="tag">${cl} · ${w}${c.coast?'':' · 内陆'}</span></h3>
+  <dl><div><dt>人口</dt><dd>${fmt(c.pop)}</dd></div><div><dt>健康</dt><dd>${fmt(r.H)}</dd></div><div><dt>感染</dt><dd>${fmt(r.I)}</dd></div><div><dt>死亡</dt><dd>${fmt(r.D)}</dd></div></dl>
+  <p class="gates">${gate(r.air,'机场')} · ${c.coast?gate(r.port,'港口'):'无海港'} · ${gate(r.border,'边境')}${c.nb.length?` · 陆上邻国 ${c.nb.length} 个`:' · 无陆上邻国'}</p>`;
+}
+function render(force){
+  const X=S.c;let Hh=0,I=0,D=0;for(const r of X){Hh+=r.H;I+=r.I;D+=r.D;}
+  $('#day').textContent=S.day;$('#pts').textContent=S.pts;
+  $('#gH').textContent=fmt(Hh);$('#gI').textContent=fmt(I);$('#gD').textContent=fmt(D);
+  $('#nReached').textContent=S.reachedN;
+  $('#bH').style.width=(Hh/TOTAL*100)+'%';$('#bI').style.width=(I/TOTAL*100)+'%';$('#bD').style.width=(D/TOTAL*100)+'%';
+  if(S.research){$('#cureTxt').textContent=S.cure.toFixed(1)+'%';$('#bC').style.width=S.cure+'%';$('#cureNote').textContent='';}
+  else{$('#cureTxt').textContent='未启动';$('#bC').style.width='0%';$('#cureNote').textContent=S.started?`察觉度 ${Math.min(99,S.aware).toFixed(0)}%`:'';}
+  const st=stats();
+  $('#vInf').textContent=st.inf;$('#vSev').textContent=st.sev;$('#vLeth').textContent=st.leth;
+  $('#mInf').style.width=Math.min(100,st.inf/63*100)+'%';$('#mSev').style.width=Math.min(100,st.sev/52*100)+'%';$('#mLeth').style.width=Math.min(100,st.leth/47*100)+'%';
+  if(force||S.day!==lastDay||S.pts!==lastPts){paintMap();updateTraits();renderRegion();lastDay=S.day;lastPts=S.pts;}
+  if(S.logDirty)renderLog();
+}
+
+function scanLabel(){$('#scanState').textContent=!S.started?'待命':S.over?'监测结束':S.speed?'扫描中':'已暂停';}
+function setSpeed(s){S.speed=s;if(s>0)lastSpeed=s;for(let k=0;k<4;k++)$('#sp'+k).setAttribute('aria-pressed',String(k===s));scanLabel();}
+function onCountry(i,zoom){
+  if(waitingStart&&!S.started){startAt(i);waitingStart=false;$('#hint').hidden=true;setSpeed(1);}
+  S.sel=i;hl.setAttribute('d',C[i].d||`M${C[i].x-3},${C[i].y}a3,3 0 1,0 6,0a3,3 0 1,0 -6,0`);
+  $('#csel').value=String(i);
+  if(zoom)focusOn(i);
+  render(true);
+}
+function survivorPlaces(){return S.c.map((r,i)=>[i,r.H]).filter(a=>a[1]>=1).sort((a,b)=>b[1]-a[1]).slice(0,3).map(a=>C[a[0]].name).join('、')||'海岛';}
+function showEnd(){
+  let D=0,I=0;for(const r of S.c){D+=r.D;I+=r.I;}
+  const t={win:['终末降临',`${S.name} 在第 ${S.day} 天带走了最后一名人类。疫苗没能赶上。`,'换个起点或更高难度再挑战一次。','var(--red)'],
+    nearwin:['几乎全胜',`${S.name} 在第 ${S.day} 天随最后的宿主一起消失，世界只剩约 ${fmt(S.survivors||0)} 人，躲在${survivorPlaces()}等偏远地方。`,'想要完胜：先等「已波及」数字接近全部国家和地区，再进化致命症状。','var(--amber)'],
+    cure:['疫苗赢了',`第 ${S.day} 天，疫苗完成并开始全球分发。${S.name} 一共波及 ${S.reachedN} 个国家和地区，感染过 ${fmt(I+D)} 人。`,'提示：症状越重越早被发现。先悄悄扩散到每个国家，再提高致死率；基因重组能拖慢研发。','var(--cyan)'],
+    extinct:['菌株灭绝',`第 ${S.day} 天，最后一名感染者也不在了，${S.name} 没能延续下去。`,'提示：致死率太高时宿主死得比传播还快。先提升感染力，后加致命症状。','var(--muted)']}[S.result];
+  $('#endTitle').textContent=t[0];$('#endTitle').style.color=t[3];$('#endText').textContent=t[1];$('#endTip').textContent=t[2];
+  $('#eDay').textContent=S.day;$('#eDead').textContent=fmt(D);$('#eCure').textContent=S.cure.toFixed(1)+'%';
+  scanLabel();
+  $('#endOv').hidden=false;$('#againBtn').focus();
+}
+
+let last=performance.now(),acc=0,endShown=false;
+const DPS=[0,1,3,6];
+function frame(now){
+  const dt=Math.min(0.25,(now-last)/1000);last=now;
+  const running=S.started&&!S.over&&S.speed>0;
+  if(running){
+    acc+=dt*DPS[S.speed];let n=0;
+    while(acc>=1&&n<8&&!S.over){acc-=1;step();n++;}
+    if(acc>=1)acc=0;
+    while(S.fx.length)spawnFlight(S.fx.shift());
+    if(S.over&&!endShown){endShown=true;setTimeout(showEnd,900);}
+  }
+  sweepTick(dt,running||!S.started);
+  animFlights(dt);animPings(dt);render(false);
+  requestAnimationFrame(frame);
+}
+
+(function fillSelect(){
+  const col=new Intl.Collator('zh-CN');
+  const sel=$('#csel');
+  C.map((c,i)=>[c.name,i]).sort((a,b)=>col.compare(a[0],b[0])).forEach(([n,i])=>{const o=document.createElement('option');o.value=String(i);o.textContent=n;sel.appendChild(o);});
+  sel.addEventListener('change',()=>{if(sel.value!=='')onCountry(+sel.value,true);});
+  $('#nAll').textContent=N;
+})();
+document.querySelectorAll('[id^="sp"]').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.s)));
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderTraits();}));
+document.querySelectorAll('#diffSeg button').forEach(b=>b.addEventListener('click',()=>{selDiff=b.dataset.d;document.querySelectorAll('#diffSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+$('#startBtn').addEventListener('click',()=>{
+  newGame($('#pathName').value.trim()||'菌株-07',selDiff);
+  $('#pname').textContent=S.name+' · '+DIFF[selDiff].name;
+  $('#startOv').hidden=true;$('#hint').hidden=false;waitingStart=true;endShown=false;acc=0;
+  hl.setAttribute('d','');$('#csel').value='';
+  clearFx();setSpeed(1);renderTraits();renderLog();render(true);
+});
+$('#againBtn').addEventListener('click',()=>{$('#endOv').hidden=true;$('#startOv').hidden=false;$('#pathName').focus();});
+document.addEventListener('keydown',e=>{
+  if(/INPUT|SELECT/.test(e.target.tagName)||!S.started||S.over)return;
+  if(e.key===' '&&e.target===document.body){e.preventDefault();setSpeed(S.speed?0:lastSpeed);}
+  else if(e.key==='1'||e.key==='2'||e.key==='3')setSpeed(+e.key);
+  else if(e.key==='0'||e.key==='p')setSpeed(0);
+});
+
+newGame('菌株-07','casual');
+buildMap();renderTraits();renderLog();render(true);
+mapW=mapPxWidth();layoutLabels();updateLabels();scanLabel();
+$('#zlab').addEventListener('click',e=>{showLabels=!showLabels;e.currentTarget.setAttribute('aria-pressed',String(showLabels));updateLabels();});
+if(window.ResizeObserver)new ResizeObserver(()=>{const w=mapPxWidth();mapW=w;if(Math.abs(w-layoutW)>20)layoutLabels();updateLabels();}).observe(svg);
+else window.addEventListener('resize',()=>{mapW=mapPxWidth();layoutLabels();updateLabels();});
+requestAnimationFrame(frame);
+</script>
