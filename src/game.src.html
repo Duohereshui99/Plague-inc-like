@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=ZCOOL+QingKe+HuangYou&display=swap">
 <style>
-/* Layout: war-room monitor — phosphor world screen on the left; command stack (strain readout, evolution bank, comms log) on the right; stacks on phones */
+/* Layout: war-room monitor — phosphor world screen on the left; command stack (strain readout, circuit-board evolution tree, comms log) on the right; stacks on phones */
 :root{
   --bg:#040a06; --panel:#07120b; --panel2:#0b1a10; --line:#17402a;
   --fg:#a8f5c0; --muted:#4f8f63; --phos:#39ff7a;
@@ -13,10 +13,12 @@
   --f-term:"VT323",ui-monospace,Menlo,Consolas,monospace;
   --f-body:"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
   color-scheme:dark;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--fg)}
-body{font-family:var(--f-body);font-size:14px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;background:radial-gradient(1100px 520px at 28% 0%,#0a1c11 0%,var(--bg) 62%),var(--bg)}
+body{margin:0;font-family:var(--f-body);font-size:14px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;background:radial-gradient(1100px 520px at 28% 0%,#0a1c11 0%,var(--bg) 62%),var(--bg)}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,transparent 1px 3px)}
 .app{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--phos);outline-offset:2px}
@@ -50,13 +52,16 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 .seg button+button{border-left:1px solid var(--line)}
 .seg button:hover{color:var(--fg)}
 .seg button[aria-pressed="true"]{background:var(--phos);color:#02110a}
+.sndbtn{background:transparent;color:var(--phos);border:1px solid var(--line);border-radius:2px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.sndbtn[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}
+.sndbtn:hover{border-color:var(--phos)}
 
 .status{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px 22px;padding:12px 14px}
 .row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:6px}
 .legend{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--muted)}
 .legend b,.row .lbl b{font-family:var(--f-term);font-size:20px;font-weight:400;color:var(--fg);margin-left:4px;font-variant-numeric:tabular-nums}
-.legend i{display:inline-block;width:9px;height:9px;margin-right:5px}
-.h{background:#1f9a4a} .i{background:linear-gradient(90deg,var(--amber),var(--red))} .d{background:#5a1a14} .c{background:var(--cyan);box-shadow:0 0 10px rgba(94,230,255,.6)}
+.legend i,.elegend i{display:inline-block;width:9px;height:9px;margin-right:5px}
+.h{background:#1f9a4a} .i{background:linear-gradient(90deg,var(--amber),var(--red))} .d{background:#5a1a14} .d2{background:var(--red)} .c{background:var(--cyan);box-shadow:0 0 10px rgba(94,230,255,.6)}
 .bar{position:relative;height:12px;background:#0b1f13;display:flex;overflow:hidden;border-radius:1px}
 .bar::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 5px,var(--panel) 5px 7px)}
 .bar span{height:100%;transition:width .3s linear}
@@ -109,26 +114,49 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 .mbar::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 4px,var(--panel) 4px 6px)}
 .mbar span{display:block;height:100%;width:0;transition:width .3s}
 #mInf{background:var(--amber);box-shadow:0 0 8px rgba(255,178,46,.5)} #mSev{background:#ff7a3b} #mLeth{background:var(--red);box-shadow:0 0 8px rgba(255,59,59,.5)}
-.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tabs{display:flex;gap:4px;margin-bottom:6px}
 .tabs button{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:2px;padding:6px 4px;font:inherit;font-size:13px;cursor:pointer}
 .tabs button:hover{color:var(--fg)}
 .tabs button[aria-selected="true"]{background:var(--phos);color:#02110a;border-color:var(--phos)}
 .tabs small{font-family:var(--f-term);font-size:16px;margin-left:4px}
-.traits{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;max-height:440px;overflow:auto;padding-right:2px}
-.trait{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:9px 10px;color:var(--fg);font:inherit;cursor:pointer;align-content:start}
-.trait:hover{border-color:var(--phos);box-shadow:0 0 12px rgba(57,255,122,.14)}
-.tn{font-weight:600;font-size:14px}
-.tc{font-family:var(--f-term);font-size:19px;line-height:1.05;color:var(--amber);border:1px solid currentColor;border-radius:2px;padding:0 6px;align-self:center}
-.td{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.45}
-.tfx{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--phos)}
-.treq{grid-column:1/-1;font-size:11px;color:var(--amber)}
-.treq:empty{display:none}
-.trait.owned{border-color:var(--amber);background:linear-gradient(180deg,rgba(255,178,46,.13),transparent 70%),var(--panel2);cursor:default}
-.trait.owned .tn{color:var(--amber)}
-.trait.owned .tc{background:var(--amber);color:#1a0f00;border-color:var(--amber)}
-.trait.locked{opacity:.42;cursor:not-allowed}
-.trait.poor{cursor:not-allowed}
-.trait.poor .tc{color:var(--muted)}
+
+/* circuit-board evolution tree */
+.board{width:100%;height:auto;display:block;background:radial-gradient(circle at 1px 1px,rgba(57,255,122,.09) 1px,transparent 1.5px) 0 0/13px 13px,#050e08;border:1px solid var(--line);border-radius:2px}
+.colh{font-family:var(--f-body);font-size:11px;fill:var(--muted);text-anchor:middle;letter-spacing:.24em}
+.trace{fill:none;stroke:#1b4a2f;stroke-width:2.2;stroke-linejoin:round}
+.trace.or{stroke-dasharray:5 4}
+.trace.on{stroke:var(--phos);filter:drop-shadow(0 0 2px rgba(57,255,122,.8))}
+.trace.flow{stroke-dasharray:7 5;animation:flow .9s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-12}}
+.via{fill:#081510;stroke:#1b4a2f;stroke-width:1.5}
+.via.on{stroke:var(--phos);fill:#0f3a22}
+.chip{cursor:pointer;transform-box:fill-box;transform-origin:center}
+.chip .body{fill:#081510;stroke:#1d5534;stroke-width:1.5}
+.chip .pin{stroke:#1d5534;stroke-width:2}
+.chip .lab{font-family:var(--f-body);font-size:12px;fill:var(--muted);text-anchor:middle;dominant-baseline:central}
+.chip .cost{font-family:var(--f-term);font-size:16px;fill:var(--muted);text-anchor:middle;dominant-baseline:central}
+.chip.unl .body{stroke:#2f8a52} .chip.unl .lab{fill:var(--fg)}
+.chip.avail .body{stroke:var(--phos);fill:#0c2616} .chip.avail .lab{fill:#e2ffec} .chip.avail .cost{fill:var(--amber)} .chip.avail .pin{stroke:var(--phos)}
+.chip.owned{filter:drop-shadow(0 0 5px rgba(255,178,46,.6))}
+.chip.owned .body{fill:var(--amber);stroke:#ffd98f} .chip.owned .lab{fill:#1a0f00;font-weight:700} .chip.owned .cost{fill:#6b4300} .chip.owned .pin{stroke:var(--amber)}
+.chip.locked{opacity:.5}
+.chip.sel .body{stroke:#ffffff;stroke-width:2.6}
+.chip:hover .body{stroke-width:2.6}
+.chip:focus{outline:none}
+.chip:focus-visible .body{stroke:#ffffff;stroke-dasharray:3 2}
+.tdetail{margin-top:10px;background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:10px 12px;min-height:124px;display:flex;flex-direction:column;gap:3px}
+.tdetail p{margin:0}
+.tdh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tdh b{color:var(--phos);font-size:15px}
+.tc{font-family:var(--f-term);font-size:19px;line-height:1.05;color:var(--amber);border:1px solid currentColor;border-radius:2px;padding:0 6px}
+.td{font-size:12px;color:var(--fg);line-height:1.5}
+.tfx{font-size:12px;line-height:1.4;color:var(--phos)}
+.treq{font-size:11px;color:var(--muted)}
+.evo{margin-top:6px;align-self:flex-start;background:var(--phos);color:#02110a;border:0;border-radius:2px;padding:7px 18px;font:inherit;font-size:14px;font-weight:700;letter-spacing:.12em;cursor:pointer;box-shadow:0 0 14px rgba(57,255,122,.3)}
+.evo:hover{background:#7dffa8}
+.evo:disabled{background:transparent;color:var(--muted);border:1px solid var(--line);box-shadow:none;cursor:not-allowed}
+.tdetail .empty{color:var(--muted);font-size:13px}
+
 .log ol{list-style:none;margin:0;padding:0;max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:5px}
 .log li{font-size:13px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:baseline}
 .log li span{font-family:var(--f-term);font-size:17px;color:var(--muted)}
@@ -136,7 +164,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 .log li.inf{color:var(--amber)} .log li.close{color:var(--cyan)} .log li.cure{color:#d4fbff} .log li.dead{color:var(--red)}
 
 /* SVG map */
-.grat{fill:none;stroke:#0f3a22;stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none}
+.grat{fill:none;stroke:#0f3a22;stroke-width:.6;vector-effect:non-scaling-stroke;pointer-events:none;opacity:.8}
 .sph{fill:none;stroke:#1d5a35;stroke-width:1;vector-effect:non-scaling-stroke;pointer-events:none}
 .ct{stroke:#2a8a4f;stroke-width:.6;vector-effect:non-scaling-stroke;cursor:pointer}
 .ct.inf{stroke:#ffcf7a;stroke-opacity:.6}
@@ -144,11 +172,14 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 .ct.sealed{stroke:var(--cyan);stroke-width:1.1;stroke-opacity:1}
 .ct.tiny{stroke-width:.8}
 .ct:hover{filter:brightness(1.5)}
+.flash{pointer-events:none;vector-effect:non-scaling-stroke}
+.flash.inf{fill:#ffd36b;stroke:#fff4cf;stroke-width:1.5}
+.flash.lock{fill:rgba(94,230,255,.12);stroke:var(--cyan);stroke-width:3}
 #hl{fill:none;stroke:#eafff0;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none;filter:drop-shadow(0 0 3px #39ff7a)}
 .trail{fill:none;stroke-width:1.3;stroke-dasharray:3 4;vector-effect:non-scaling-stroke;pointer-events:none}
-.trail.air{stroke:var(--amber)} .trail.sea{stroke:var(--cyan)} .trail.land{stroke:var(--red)}
+.trail.air{stroke:var(--amber)} .trail.sea{stroke:var(--cyan)} .trail.land{stroke:var(--red)} .trail.bird{stroke:var(--phos)}
 .dot{pointer-events:none}
-.dot.air{fill:var(--amber)} .dot.sea{fill:var(--cyan)} .dot.land{fill:var(--red)}
+.dot.air{fill:var(--amber)} .dot.sea{fill:var(--cyan)} .dot.land{fill:var(--red)} .dot.bird{fill:var(--phos)}
 .ping{fill:rgba(255,178,46,.12);stroke:var(--amber);stroke-width:1.4;vector-effect:non-scaling-stroke;pointer-events:none}
 .ping.hi{fill:rgba(255,59,59,.14);stroke:var(--red)}
 .lb{font-family:var(--f-body);font-weight:500;fill:var(--fg);text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:rgba(2,6,4,.88);stroke-linejoin:round;stroke-width:calc(var(--u,1px)*2.6);font-size:calc(var(--u,1px)*10);opacity:.78}
@@ -157,10 +188,15 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 
 /* overlays */
 .overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(2,6,4,.9);overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.card{max-width:480px;width:100%;display:flex;flex-direction:column;gap:14px;padding:22px}
+.card{max-width:500px;width:100%;display:flex;flex-direction:column;gap:14px;padding:22px}
 .card h2{font-family:var(--f-display);font-weight:400;font-size:42px;line-height:1.1;margin:0;color:var(--phos);letter-spacing:.14em;text-shadow:0 0 8px rgba(57,255,122,.6),0 0 24px rgba(57,255,122,.25);text-wrap:balance}
 .card p{margin:0;color:var(--fg)}
 .card label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);letter-spacing:.1em}
+.boot{margin:0;font-family:var(--f-term);font-size:18px;line-height:1.3;color:var(--phos);white-space:pre-wrap;min-height:6.6em;text-shadow:0 0 6px rgba(57,255,122,.45)}
+.boot .warn{color:var(--amber);text-shadow:0 0 6px rgba(255,178,46,.5)}
+.boot .cur{animation:blink .8s steps(2,start) infinite}
+.startbody{display:flex;flex-direction:column;gap:14px;transition:opacity .5s}
+.startbody.booting{opacity:.18;pointer-events:none}
 .prompt{position:relative;display:block}
 .prompt::before{content:">";position:absolute;left:10px;top:50%;transform:translateY(-52%);color:var(--phos);font-family:var(--f-term);font-size:22px;pointer-events:none}
 .card input{width:100%;background:#03100a;border:1px solid var(--line);color:var(--phos);border-radius:2px;padding:7px 11px 7px 28px;font-family:var(--f-term);font-size:22px;letter-spacing:.04em}
@@ -173,9 +209,16 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 .endstats div{background:var(--panel2);border:1px solid var(--line);border-radius:2px;padding:6px 10px}
 .endstats b{display:block;font-family:var(--f-term);font-size:24px;font-weight:400;line-height:1.1}
 .endstats span{font-size:11px;color:var(--muted)}
+.echart{width:100%;height:auto;display:block;background:#03100a;border:1px solid var(--line);border-radius:2px}
+.echart path{fill:none;stroke-width:2;stroke-linejoin:round}
+.echart .l-h{stroke:#1f9a4a} .echart .l-i{stroke:var(--amber)} .echart .l-d{stroke:var(--red)} .echart .l-c{stroke:var(--cyan);stroke-dasharray:6 4}
+.echart .eg{stroke:var(--line);stroke-width:1}
+.echart .er{stroke:var(--cyan);stroke-width:1;stroke-dasharray:2 3;opacity:.7}
+.echart .et{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.elegend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:6px}
 .tip{font-size:13px;color:var(--amber)!important}
 
-@media (max-width:920px){.grid{grid-template-columns:1fr}.traits{max-height:none}}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
 @media (max-width:640px){
   .status{grid-template-columns:1fr}
   h1{font-size:28px}
@@ -185,7 +228,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
   .zoom button{width:30px;height:30px}
   .mapstat{font-size:15px}
 }
-@media (prefers-reduced-motion:reduce){.hint,.mapstat .blink{animation:none}.bar span,.mbar span{transition:none}.sweep{display:none}}
+@media (prefers-reduced-motion:reduce){.hint,.mapstat .blink,.boot .cur{animation:none}.bar span,.mbar span{transition:none}.sweep{display:none}.trace.flow{animation:none}.startbody{transition:none}}
 </style>
 
 <div class="app">
@@ -201,6 +244,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
       <button type="button" id="sp2" data-s="2">2×</button>
       <button type="button" id="sp3" data-s="3">3×</button>
     </div>
+    <button type="button" class="sndbtn" id="snd" aria-pressed="true">音效 开</button>
     <div class="readout pts"><span class="lbl">变异点</span><b id="pts">0</b></div>
   </header>
 
@@ -254,13 +298,14 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
         </div>
       </div>
       <div class="panel">
-        <h2><b>▍</b>进化</h2>
+        <h2><b>▍</b>进化电路板</h2>
         <div class="tabs" role="tablist" aria-label="进化分类">
           <button type="button" role="tab" data-tab="trans" aria-selected="true">传播<small id="cnt-trans"></small></button>
           <button type="button" role="tab" data-tab="sym" aria-selected="false">症状<small id="cnt-sym"></small></button>
           <button type="button" role="tab" data-tab="abil" aria-selected="false">能力<small id="cnt-abil"></small></button>
         </div>
-        <div class="traits" id="traits"></div>
+        <div id="traits"></div>
+        <div class="tdetail" id="tdetail"></div>
       </div>
       <div class="panel log">
         <h2><b>▍</b>全球通讯</h2>
@@ -272,27 +317,29 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
 
 <div class="overlay" id="startOv">
   <div class="card panel">
-    <div class="sub">全球疫情监测终端 · 待命</div>
-    <h2>终末菌株</h2>
-    <p>你是一株刚刚出现的未知菌株。赶在人类研发出疫苗之前，扩散到全世界每一个国家。</p>
-    <label for="pathName">给菌株命名
-      <span class="prompt"><input id="pathName" maxlength="16" value="菌株-07" autocomplete="off"></span>
-    </label>
-    <div>
-      <div class="lbl" style="margin-bottom:6px">难度</div>
-      <div class="seg" role="group" aria-label="难度" id="diffSeg">
-        <button type="button" class="cn" data-d="casual" aria-pressed="true">休闲</button>
-        <button type="button" class="cn" data-d="normal">标准</button>
-        <button type="button" class="cn" data-d="hard">困难</button>
+    <pre class="boot" id="boot" aria-hidden="true"></pre>
+    <div class="startbody" id="startBody">
+      <h2>终末菌株</h2>
+      <p>你是一株刚刚出现的未知菌株。赶在人类研发出疫苗之前，扩散到全世界每一个国家。</p>
+      <label for="pathName">给菌株命名
+        <span class="prompt"><input id="pathName" maxlength="16" value="菌株-07" autocomplete="off"></span>
+      </label>
+      <div>
+        <div class="lbl" style="margin-bottom:6px">难度</div>
+        <div class="seg" role="group" aria-label="难度" id="diffSeg">
+          <button type="button" class="cn" data-d="casual" aria-pressed="true">休闲</button>
+          <button type="button" class="cn" data-d="normal">标准</button>
+          <button type="button" class="cn" data-d="hard">困难</button>
+        </div>
       </div>
+      <ol>
+        <li>在世界地图上点一个国家，放出零号感染者。</li>
+        <li>传播和死亡会带来变异点，在进化电路板上解锁 63 种传播途径、症状和能力。</li>
+        <li>症状越重越容易被察觉，各国会关闭机场、港口和边境，疫苗研发也会加快。</li>
+        <li>所有人类消失你就赢了；疫苗研发到 100% 或菌株灭绝你就输了。</li>
+      </ol>
+      <button type="button" class="go" id="startBtn">释放菌株</button>
     </div>
-    <ol>
-      <li>在世界地图上点一个国家，放出零号感染者。</li>
-      <li>传播和死亡会带来变异点，用来进化传播途径、症状和能力。</li>
-      <li>症状越重越容易被察觉，各国会关闭机场、港口和边境，疫苗研发也会加快。</li>
-      <li>所有人类消失你就赢了；疫苗研发到 100% 或菌株灭绝你就输了。</li>
-    </ol>
-    <button type="button" class="go" id="startBtn">释放菌株</button>
   </div>
 </div>
 
@@ -306,6 +353,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.05;
       <div><b id="eDead">0</b><span>死亡人数</span></div>
       <div><b id="eCure">0%</b><span>疫苗进度</span></div>
     </div>
+    <div id="eChart"></div>
     <p class="tip" id="endTip"></p>
     <button type="button" class="go" id="againBtn">再来一局</button>
   </div>
@@ -321,41 +369,78 @@ const AIRW=C.map(r=>Math.sqrt(r.pop)*(0.3+r.w));
 const AIRW_SUM=AIRW.reduce((a,b)=>a+b,0);
 const SEAW=C.map((r,i)=>r.coast?AIRW[i]:0);
 const SEAW_SUM=SEAW.reduce((a,b)=>a+b,0);
+/* Evolution tree. g = [column,row] on the circuit board; req items are ANDed, "a|b" means either. */
 const TRAITS=[
-  {tab:'trans',id:'air1',name:'气溶胶 I',cost:9,req:[],fx:{inf:3,air:1},desc:'借空气飘散，在富裕城市和航班上传播更快。'},
-  {tab:'trans',id:'air2',name:'气溶胶 II',cost:15,req:['air1'],fx:{inf:5,air:1},desc:'微粒更轻，能在机舱空调循环里存活。'},
-  {tab:'trans',id:'wat1',name:'水源 I',cost:9,req:[],fx:{inf:3,water:1},desc:'在水中存活，贫困地区和海运更易传播。'},
-  {tab:'trans',id:'wat2',name:'水源 II',cost:14,req:['wat1'],fx:{inf:5,water:1},desc:'耐受净水处理，货轮压舱水成了温床。'},
-  {tab:'trans',id:'ins1',name:'蚊媒 I',cost:10,req:[],fx:{inf:3,insect:1},desc:'借蚊虫叮咬传播，炎热地区效果最好。'},
-  {tab:'trans',id:'ins2',name:'蚊媒 II',cost:16,req:['ins1'],fx:{inf:5,insect:1},desc:'适应更多虫种，陆路跨境扩散加快。'},
-  {tab:'trans',id:'liv1',name:'禽畜 I',cost:8,req:[],fx:{inf:2,live:1},desc:'在家禽家畜间流行，农村地区更易传播。'},
-  {tab:'trans',id:'liv2',name:'禽畜 II',cost:13,req:['liv1'],fx:{inf:4,live:1},desc:'跨物种跳跃更容易，随牲畜贸易跨境。'},
-  {tab:'trans',id:'ext',name:'全域传播',cost:24,req:['air2','wat2'],fx:{inf:8,air:1,water:1},desc:'空气和水源两条路同时强化，跨洲传播大增。'},
-  {tab:'sym',id:'cough',name:'咳嗽',cost:4,req:[],fx:{inf:3,sev:1},desc:'飞沫增多，传播加快，几乎不引人注意。'},
-  {tab:'sym',id:'rash',name:'皮疹',cost:3,req:[],fx:{inf:2,sev:1},desc:'接触传播增加，症状轻微。'},
-  {tab:'sym',id:'insom',name:'失眠',cost:3,req:[],fx:{sev:2},desc:'患者疲惫不堪，对传播帮助不大。'},
-  {tab:'sym',id:'fever',name:'发热',cost:6,req:['cough|rash'],fx:{inf:2,sev:3,leth:1},desc:'体温升高，开始出现零星死亡。'},
-  {tab:'sym',id:'sneeze',name:'喷嚏',cost:6,req:['cough'],fx:{inf:5,sev:2},desc:'一个喷嚏就能感染一整节车厢。'},
-  {tab:'sym',id:'vomit',name:'呕吐',cost:7,req:['fever'],fx:{inf:4,sev:3,leth:1},desc:'污染水和食物，传播与致死都上升。'},
-  {tab:'sym',id:'pneu',name:'肺炎',cost:10,req:['sneeze|fever'],fx:{inf:3,sev:4,leth:3},desc:'呼吸道严重受损，重症开始增多。'},
-  {tab:'sym',id:'organ',name:'器官衰竭',cost:18,req:['vomit'],fx:{sev:8,leth:8},desc:'致死率大幅上升，各国会迅速警觉。'},
-  {tab:'sym',id:'coma',name:'昏迷',cost:15,req:['pneu|insom'],fx:{sev:6,leth:6},desc:'患者失去意识，医疗系统不堪重负。'},
-  {tab:'sym',id:'hemo',name:'全身出血',cost:22,req:['organ'],fx:{inf:6,sev:10,leth:10},desc:'极其致命，血液也成了传播途径。'},
-  {tab:'sym',id:'total',name:'系统崩溃',cost:30,req:['hemo','coma'],fx:{sev:12,leth:18},desc:'终极症状。感染者很快死亡。'},
-  {tab:'abil',id:'cold1',name:'耐寒 I',cost:8,req:[],fx:{cold:1},desc:'在寒冷国家存活得更好。'},
-  {tab:'abil',id:'cold2',name:'耐寒 II',cost:14,req:['cold1'],fx:{cold:1},desc:'严寒不再是阻碍。'},
-  {tab:'abil',id:'heat1',name:'耐热 I',cost:8,req:[],fx:{heat:1},desc:'在炎热国家存活得更好。'},
-  {tab:'abil',id:'heat2',name:'耐热 II',cost:14,req:['heat1'],fx:{heat:1},desc:'酷暑不再是阻碍。'},
-  {tab:'abil',id:'drug1',name:'抗药 I',cost:10,req:[],fx:{drug:1},desc:'普通药物效果下降，富裕国家更难压制。'},
-  {tab:'abil',id:'drug2',name:'抗药 II',cost:16,req:['drug1'],fx:{drug:1},desc:'抵抗多数抗生素和抗病毒药。'},
-  {tab:'abil',id:'drug3',name:'抗药 III',cost:24,req:['drug2'],fx:{drug:1},desc:'现代医疗几乎无效。'},
-  {tab:'abil',id:'camo1',name:'基因伪装 I',cost:12,req:[],fx:{camo:1},desc:'更晚被人类察觉，研发启动推迟。'},
-  {tab:'abil',id:'camo2',name:'基因伪装 II',cost:20,req:['camo1'],fx:{camo:1},desc:'检测试剂经常漏检。'},
-  {tab:'abil',id:'shuf1',name:'基因重组 I',cost:15,req:[],fx:{shuf:1},desc:'疫苗进度倒退 6%，之后研发变慢。'},
-  {tab:'abil',id:'shuf2',name:'基因重组 II',cost:22,req:['shuf1'],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发继续变慢。'},
-  {tab:'abil',id:'shuf3',name:'基因重组 III',cost:30,req:['shuf2'],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发大幅变慢。'}
+  {tab:'trans',id:'drop',s:'飞沫',name:'飞沫传播',cost:5,req:[],g:[0,0],fx:{inf:2,air:.5},desc:'咳嗽和说话时喷出的飞沫携带菌株，近距离传播。'},
+  {tab:'trans',id:'aero',s:'气溶胶',name:'气溶胶传播',cost:10,req:['drop'],g:[0,1],fx:{inf:4,air:1},desc:'微粒能在空气中悬浮数小时，室内和机舱里传播更快。'},
+  {tab:'trans',id:'hvac',s:'通风管道',name:'通风系统定植',cost:14,req:['aero'],g:[0,2],fx:{inf:4,air:.5,rich:1},desc:'菌株在中央空调和通风管道里定植，富裕国家的写字楼成了温床。'},
+  {tab:'trans',id:'hub',s:'航空枢纽',name:'航空枢纽适应',cost:18,req:['hvac'],g:[0,3],fx:{inf:3,airx:1},desc:'在机场和机舱环境里长期存活，航班传播更多，机场关闭后也更容易漏网。'},
+  {tab:'trans',id:'fom',s:'表面存活',name:'物体表面存活',cost:4,req:[],g:[1,0],fx:{inf:2,contact:1},desc:'能在门把手和桌面上存活数天，摸一下就会传播。'},
+  {tab:'trans',id:'touch',s:'高频接触',name:'高频接触物',cost:9,req:['fom'],g:[1,1],fx:{inf:3,contact:1,rich:.5},desc:'钞票、扶手、电梯按钮，城市生活处处是传播点。'},
+  {tab:'trans',id:'chain',s:'冷链',name:'冷链物流',cost:13,req:['touch'],g:[1,2],fx:{inf:2,sea:1,cold:.5},desc:'在冷冻食品包装上休眠，随冷链运输跨越大洋，也更耐寒。'},
+  {tab:'trans',id:'wat',s:'水源',name:'水源传播',cost:6,req:[],g:[2,0],fx:{inf:2,water:1},desc:'污染饮用水源，卫生条件差的地区传播更快。'},
+  {tab:'trans',id:'sew',s:'污水',name:'污水系统扩散',cost:10,req:['wat'],g:[2,1],fx:{inf:3,water:1},desc:'在下水道和污水处理厂里繁殖，顺着管网扩散。'},
+  {tab:'trans',id:'bal',s:'压舱水',name:'压舱水搭载',cost:13,req:['sew'],g:[2,2],fx:{inf:2,water:.5,sea:1},desc:'藏身货轮压舱水，跟着航运抵达各大港口。'},
+  {tab:'trans',id:'freight',s:'全球货运',name:'全球货运网络',cost:20,req:['chain','bal'],g:[1.5,3],fx:{inf:4,sea:1,leak:1},desc:'集装箱、冷链和远洋货轮连成一张网，港口和边境关闭也挡不住全部货物。'},
+  {tab:'trans',id:'mosq',s:'蚊媒',name:'蚊虫传播',cost:8,req:[],g:[3,0],fx:{inf:3,insect:1},desc:'通过蚊虫叮咬传播，炎热国家效果最好。'},
+  {tab:'trans',id:'tick',s:'蜱虫',name:'蜱虫传播',cost:11,req:['mosq'],g:[3,1],fx:{inf:3,insect:1,cold:.5},desc:'蜱虫在温带和寒冷地区也很活跃，跨境扩散更容易。'},
+  {tab:'trans',id:'live',s:'禽畜',name:'禽畜传播',cost:7,req:[],g:[4,0],fx:{inf:2,live:1},desc:'在家禽和家畜间流行，农村地区更容易传播。'},
+  {tab:'trans',id:'wild',s:'野生动物',name:'野生动物宿主',cost:11,req:['live'],g:[4,1],fx:{inf:3,live:1},desc:'野生动物成了天然宿主，沿着边境地带自由扩散。'},
+  {tab:'trans',id:'bird',s:'候鸟',name:'候鸟迁徙',cost:16,req:['wild'],g:[4,2],fx:{inf:2,bird:1},desc:'随候鸟季节性迁徙，把菌株带到遥远的国家，封锁也拦不住。'},
+  {tab:'trans',id:'zoo',s:'跨物种',name:'跨物种跳跃',cost:22,req:['tick','bird'],g:[3.5,3],fx:{inf:6,live:1,leak:1},desc:'在动物和人之间来回跳跃，封锁的边境再也挡不住。'},
+  {tab:'trans',id:'super',s:'超级传播',name:'超级传播者',cost:28,req:['hub|freight|zoo'],g:[2,4],fx:{inf:10},desc:'少数感染者能传染成百上千人，各地疫情同时爆发。'},
+
+  {tab:'sym',id:'dcough',s:'干咳',name:'干咳',cost:3,req:[],g:[0,0],fx:{inf:2,sev:1},desc:'轻微的刺激性干咳，几乎没人当回事。'},
+  {tab:'sym',id:'sneeze',s:'喷嚏',name:'喷嚏',cost:5,req:['dcough'],g:[0,1],fx:{inf:4,sev:1},desc:'飞沫随喷嚏四散，传播大幅加快。'},
+  {tab:'sym',id:'breath',s:'气促',name:'呼吸急促',cost:8,req:['sneeze'],g:[0,2],fx:{inf:2,sev:3,leth:1},desc:'患者稍一活动就喘不上气，开始有人住院。'},
+  {tab:'sym',id:'spores',s:'孢子咳出',name:'孢子咳出',cost:13,req:['breath','plaques'],g:[0,3],fx:{inf:7,sev:4},desc:'肺部和皮肤里的菌丝产生孢子，随咳嗽大量喷出。'},
+  {tab:'sym',id:'consol',s:'肺部实变',name:'肺部实变',cost:15,req:['spores'],g:[0,4],fx:{sev:5,leth:4},desc:'肺泡被菌丝填满，重症病房开始告急。'},
+  {tab:'sym',id:'respf',s:'呼吸衰竭',name:'呼吸衰竭',cost:21,req:['consol'],g:[0,5],fx:{sev:8,leth:9},desc:'患者无法自主呼吸，呼吸机供不应求。'},
+  {tab:'sym',id:'appet',s:'食欲减退',name:'食欲减退',cost:2,req:[],g:[1,0],fx:{inf:1,sev:1},desc:'吃不下饭、浑身乏力，症状很不起眼。'},
+  {tab:'sym',id:'diarr',s:'腹泻',name:'腹泻',cost:5,req:['appet'],g:[1,1],fx:{inf:3,sev:2},desc:'排泄物污染水源和厕所，传播加快。'},
+  {tab:'sym',id:'dehyd',s:'脱水',name:'脱水',cost:8,req:['diarr'],g:[1,2],fx:{sev:3,leth:2},desc:'严重腹泻导致脱水，贫困地区死亡增多。'},
+  {tab:'sym',id:'gibleed',s:'肠道出血',name:'肠道出血',cost:14,req:['dehyd'],g:[1,3],fx:{inf:2,sev:5,leth:5},desc:'消化道出血，血液也成了传播途径。'},
+  {tab:'sym',id:'liver',s:'肝损伤',name:'肝损伤',cost:16,req:['gibleed'],g:[1,4],fx:{sev:6,leth:6,drug:.5},desc:'菌株侵入肝脏，药物代谢也被打乱。'},
+  {tab:'sym',id:'itch',s:'瘙痒',name:'瘙痒',cost:2,req:[],g:[2,0],fx:{inf:1,sev:1},desc:'皮肤发痒，抓挠时把菌株带到手上。'},
+  {tab:'sym',id:'rash',s:'斑疹',name:'斑疹',cost:4,req:['itch'],g:[2,1],fx:{inf:3,sev:1},desc:'皮肤出现红斑，接触传播增加。'},
+  {tab:'sym',id:'plaques',s:'菌丝斑块',name:'菌丝斑块',cost:9,req:['rash'],g:[2,2],fx:{inf:4,sev:3},desc:'皮下长出灰白色菌丝斑块，脱落的碎屑也有传染性。'},
+  {tab:'sym',id:'ulcer',s:'皮肤溃烂',name:'皮肤溃烂',cost:12,req:['plaques'],g:[2,3],fx:{inf:3,sev:4,leth:2},desc:'斑块破溃感染，伤口迟迟不能愈合。'},
+  {tab:'sym',id:'invade',s:'菌丝侵入',name:'菌丝侵入',cost:18,req:['ulcer'],g:[2,4],fx:{sev:6,leth:7},desc:'菌丝从皮肤长进肌肉和内脏，病情急转直下。'},
+  {tab:'sym',id:'head',s:'头痛',name:'头痛',cost:2,req:[],g:[3,0],fx:{sev:1},desc:'持续头痛，常被当成普通感冒。'},
+  {tab:'sym',id:'somno',s:'嗜睡',name:'嗜睡',cost:3,req:['head'],g:[3,1],fx:{sev:2},desc:'患者整天昏昏欲睡，工作和学习都受影响。'},
+  {tab:'sym',id:'confus',s:'意识模糊',name:'意识模糊',cost:7,req:['somno'],g:[3,2],fx:{inf:3,sev:3},desc:'患者神志不清，不再遵守隔离规定。'},
+  {tab:'sym',id:'ataxia',s:'运动失调',name:'运动失调',cost:11,req:['confus'],g:[3,3],fx:{sev:4,leth:2},desc:'走路不稳、手脚不听使唤，跌倒和意外大增。'},
+  {tab:'sym',id:'mening',s:'脑膜炎',name:'脑膜炎',cost:17,req:['ataxia','hifever'],g:[3,4],fx:{sev:7,leth:7},desc:'菌株侵入中枢神经，医院人满为患。'},
+  {tab:'sym',id:'hijack',s:'行为操控',name:'行为操控',cost:24,req:['mening'],g:[3,5],fx:{inf:9,sev:6,leth:2},desc:'菌株改变宿主的行为，患者会主动走向人群。'},
+  {tab:'sym',id:'lofever',s:'低热',name:'低热',cost:3,req:[],g:[4,0],fx:{inf:1,sev:2},desc:'体温略高，菌株在体内繁殖更快。'},
+  {tab:'sym',id:'hifever',s:'高热',name:'高热',cost:6,req:['lofever'],g:[4,1],fx:{inf:2,sev:3,leth:1},desc:'持续高烧，开始出现零星死亡。'},
+  {tab:'sym',id:'lymph',s:'淋巴肿大',name:'淋巴结肿大',cost:8,req:['hifever'],g:[4,2],fx:{sev:3,leth:1},desc:'全身淋巴结肿大，免疫系统全力应战。'},
+  {tab:'sym',id:'immune',s:'免疫耗竭',name:'免疫耗竭',cost:13,req:['lymph'],g:[4,3],fx:{sev:4,leth:3,drug:.5},desc:'免疫系统被拖垮，药物治疗效果变差。'},
+  {tab:'sym',id:'sepsis',s:'败血症',name:'败血症',cost:20,req:['immune','gibleed|ulcer'],g:[4,4],fx:{sev:7,leth:9},desc:'菌株进入血液，引发全身感染。'},
+  {tab:'sym',id:'collapse',s:'循环崩溃',name:'循环崩溃',cost:26,req:['sepsis'],g:[4,5],fx:{sev:9,leth:14},desc:'血压骤降、器官缺血，患者很快死亡。'},
+  {tab:'sym',id:'terminal',s:'终末期',name:'终末期',cost:34,req:['respf','collapse'],g:[2,6],fx:{sev:12,leth:20},desc:'菌株进入终末阶段，感染者几乎无一幸存。'},
+
+  {tab:'abil',id:'cold1',s:'耐寒Ⅰ',name:'耐寒 I',cost:7,req:[],g:[0,0],fx:{cold:1},desc:'在寒冷国家存活得更好。'},
+  {tab:'abil',id:'cold2',s:'耐寒Ⅱ',name:'耐寒 II',cost:13,req:['cold1'],g:[0,1],fx:{cold:1},desc:'严寒不再是阻碍。'},
+  {tab:'abil',id:'heat1',s:'耐热Ⅰ',name:'耐热 I',cost:7,req:[],g:[1,0],fx:{heat:1},desc:'在炎热国家存活得更好。'},
+  {tab:'abil',id:'heat2',s:'耐热Ⅱ',name:'耐热 II',cost:13,req:['heat1'],g:[1,1],fx:{heat:1},desc:'酷暑不再是阻碍。'},
+  {tab:'abil',id:'harden',s:'孢子休眠',name:'孢子休眠',cost:16,req:['cold2|heat2'],g:[.5,2],fx:{harden:1},desc:'形成厚壁孢子熬过恶劣环境，冷热气候的影响都变小。'},
+  {tab:'abil',id:'drug1',s:'抗药Ⅰ',name:'抗药 I',cost:9,req:[],g:[2,0],fx:{drug:1},desc:'普通药物效果下降，富裕国家更难压制。'},
+  {tab:'abil',id:'drug2',s:'抗药Ⅱ',name:'抗药 II',cost:15,req:['drug1'],g:[2,1],fx:{drug:1},desc:'抵抗多数抗生素和抗真菌药。'},
+  {tab:'abil',id:'drug3',s:'抗药Ⅲ',name:'抗药 III',cost:22,req:['drug2'],g:[2,2],fx:{drug:1},desc:'现代医疗几乎无效。'},
+  {tab:'abil',id:'biofilm',s:'生物膜',name:'生物膜',cost:18,req:['drug3'],g:[2,3],fx:{drug:.5,rich:1},desc:'在医疗器械表面形成生物膜，医院反而成了传播中心。'},
+  {tab:'abil',id:'camo1',s:'伪装Ⅰ',name:'基因伪装 I',cost:11,req:[],g:[3,0],fx:{camo:1},desc:'更晚被人类察觉，疫苗研发推迟启动。'},
+  {tab:'abil',id:'camo2',s:'伪装Ⅱ',name:'基因伪装 II',cost:18,req:['camo1'],g:[3,1],fx:{camo:1},desc:'检测试剂经常漏检。'},
+  {tab:'abil',id:'latent',s:'长潜伏',name:'长潜伏期',cost:20,req:['camo2'],g:[3,2],fx:{latent:1},desc:'感染者出现症状前就已传染多人，各国更晚才开始封锁。'},
+  {tab:'abil',id:'mut',s:'突变加速',name:'突变加速',cost:12,req:[],g:[4,0],fx:{mut:1},desc:'复制错误率上升，传播和死亡带来的变异点增加 30%。'},
+  {tab:'abil',id:'shuf1',s:'重组Ⅰ',name:'基因重组 I',cost:14,req:['mut'],g:[4,1],fx:{shuf:1},desc:'疫苗进度倒退 6%，之后研发变慢。'},
+  {tab:'abil',id:'shuf2',s:'重组Ⅱ',name:'基因重组 II',cost:21,req:['shuf1'],g:[4,2],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发继续变慢。'},
+  {tab:'abil',id:'shuf3',s:'重组Ⅲ',name:'基因重组 III',cost:28,req:['shuf2'],g:[4,3],fx:{shuf:1},desc:'疫苗进度倒退 6%，研发大幅变慢。'}
 ];
-const DIFF={casual:{name:'休闲',cure:.65,aware:.7,pts:10,spare:1e6},normal:{name:'标准',cure:1,aware:1,pts:6,spare:1e5},hard:{name:'困难',cure:1.8,aware:1.4,pts:4,spare:0}};
+const TABS={trans:{name:'传播',cols:['呼吸道','接触','水','虫媒','动物']},sym:{name:'症状',cols:['呼吸','消化','皮肤','神经','循环']},abil:{name:'能力',cols:['耐寒','耐热','抗药','隐匿','基因']}};
+const MAXS={inf:0,sev:0,leth:0};TRAITS.forEach(t=>{for(const k in MAXS)MAXS[k]+=t.fx[k]||0;});
+const NORM={inf:70/MAXS.inf,sev:52/MAXS.sev,leth:80/MAXS.leth};
+const DIFF={casual:{name:'休闲',cure:.65,aware:.7,pts:12,spare:1e6},normal:{name:'标准',cure:1.25,aware:1.1,pts:8,spare:1e5},hard:{name:'困难',cure:2.5,aware:1.6,pts:5,spare:0}};
 const TR={}; TRAITS.forEach(t=>TR[t.id]=t);
 const GMS=[100,1e3,1e4,1e5,1e6,1e7,1e8,1e9];
 const DEATH_MS=[[1e6,'全球死亡人数突破一百万'],[1e8,'全球死亡人数突破一亿'],[1e9,'全球死亡人数突破十亿'],[3e9,'世界人口已减少三成以上'],[6e9,'人类文明濒临崩溃']];
@@ -364,14 +449,16 @@ let S=null;
 
 function newGame(name,diff){
   S={name:name||'菌株-07',diff,day:0,pts:DIFF[diff].pts,acc:0,started:false,over:false,result:null,speed:1,
-    traits:new Set(),research:false,aware:0,cure:0,cms:0,dms:0,gms:0,reachedN:0,
+    traits:new Set(),research:false,researchDay:null,aware:0,cure:0,cms:0,dms:0,gms:0,reachedN:0,
     c:C.map(r=>({H:r.pop,I:0,D:0,air:true,port:r.coast,border:true,reached:false,alarm:0})),
-    log:[],logDirty:true,fx:[],tab:'trans',sel:null};
+    log:[],logDirty:true,fx:[],ev:[],hist:[],tab:'trans',sel:null};
 }
 function news(text,kind){S.log.unshift({d:S.day,text,kind:kind||''});if(S.log.length>80)S.log.pop();S.logDirty=true;}
+function ev(e){S.ev.push(e);if(S.ev.length>300)S.ev.shift();}
 function stats(){
-  const s={inf:0,sev:0,leth:0,air:0,water:0,insect:0,live:0,heat:0,cold:0,drug:0,camo:0,shuf:0};
+  const s={inf:0,sev:0,leth:0,air:0,water:0,insect:0,live:0,contact:0,rich:0,sea:0,airx:0,leak:0,bird:0,heat:0,cold:0,drug:0,camo:0,latent:0,shuf:0,harden:0,mut:0};
   for(const id of S.traits){const fx=TR[id].fx;for(const k in fx)s[k]+=fx[k];}
+  s.infN=s.inf*NORM.inf;s.sevN=s.sev*NORM.sev;s.lethN=s.leth*NORM.leth;
   return s;
 }
 function unlocked(t){return t.req.every(q=>q.split('|').some(x=>S.traits.has(x)));}
@@ -389,43 +476,45 @@ function buy(id){
   return true;
 }
 function seed(j,i,how){
-  const t=S.c[j];
+  const t=S.c[j],first=!t.reached;
   const n=Math.min(2,t.H); t.I+=n; t.H-=n;
-  if(!t.reached){
+  if(first){
     t.reached=true; S.reachedN++;
     if(C[j].pop>=1e7)S.pts++; else S.acc+=0.25;
-    if(C[j].pop>=1e7||S.reachedN<=12)news(`${C[j].name} 出现首例感染，经${how==='air'?'航班':how==='sea'?'海运':'陆路'}自${C[i].name}传入`,'inf');
+    const via={air:'航班',sea:'海运',land:'陆路',bird:'候鸟'}[how];
+    if(C[j].pop>=1e7||S.reachedN<=12)news(`${C[j].name} 出现首例感染，经${via}自${C[i].name}传入`,'inf');
   }
-  S.fx.push({from:i,to:j,how});
+  S.fx.push({from:i,to:j,how,first});if(S.fx.length>300)S.fx.shift();
 }
-function pick(W,gate,self){
+function pick(W,gate,self,cw){
   let tot=0;
-  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;tot+=W[j]*(t[gate]?1:0.03);}
+  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;tot+=W[j]*(t[gate]?1:cw);}
   if(tot<=0)return -1;
   let x=Math.random()*tot;
-  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;x-=W[j]*(t[gate]?1:0.03);if(x<=0)return j;}
+  for(let j=0;j<N;j++){const t=S.c[j];if(j===self||t.I>=1||t.H<1||!W[j])continue;x-=W[j]*(t[gate]?1:cw);if(x<=0)return j;}
   return -1;
 }
 function startAt(i){
   const r=S.c[i]; r.I=20; r.H-=20; r.reached=true; S.reachedN=1; S.started=true;
+  S.hist=[[0,1,0,0,0]];
   news(`${C[i].name} 出现第一位感染者，${S.name} 开始扩散`,'inf');
 }
 function step(){
   if(!S||!S.started||S.over)return;
   S.day++;
   const st=stats(),X=S.c,d=DIFF[S.diff];
-  const lethRate=st.leth*0.004;
+  const lethRate=st.lethN*0.004;
   let nI=0,nD=0;
   for(let i=0;i<N;i++){
     const r=X[i],c=C[i];
     if(r.I<=0)continue;
     let cf=1;
-    if(c.cl==='hot')cf=0.62+0.19*Math.min(2,st.heat)+0.08*st.insect;
-    else if(c.cl==='cold')cf=0.62+0.19*Math.min(2,st.cold);
+    if(c.cl==='hot')cf=0.62+0.19*Math.min(2,st.heat+0.5*st.harden)+0.08*st.insect;
+    else if(c.cl==='cold')cf=0.62+0.19*Math.min(2,st.cold+0.5*st.harden);
     cf=Math.min(1.15,cf);
-    const wf=1-c.w*0.5*(1-Math.min(3,st.drug)/3);
-    const tf=1+st.air*0.12*c.w+st.water*0.12*(1-c.w)+st.insect*(c.cl==='hot'?0.12:0.04)+st.live*0.1*(1-c.w);
-    const beta=(0.24+0.03*st.inf)*cf*wf*tf;
+    const wf=1-c.w*0.5*(1-Math.min(1,st.drug/3+st.rich*0.12));
+    const tf=1+st.air*0.12*c.w+st.water*0.12*(1-c.w)+st.insect*(c.cl==='hot'?0.12:0.04)+st.live*0.08*(1-c.w)+st.contact*0.06;
+    const beta=(0.3+0.03*st.infN)*cf*wf*tf;
     const alive=r.H+r.I;
     const ni=Math.min(r.H,r.I*beta*(r.H/alive));
     let nd=r.I*lethRate*(1-c.w*0.25);
@@ -436,12 +525,14 @@ function step(){
     if(r.I<0.5)r.I=0;
     nI+=ni; nD+=nd;
   }
-  let airAvail=0,seaAvail=0,sI0=0,src=0;
+  const airCW=0.03*(1+3*st.airx),seaCW=0.03*(1+1.5*st.leak),landCW=0.04*(1+1.5*st.leak);
+  let airAvail=0,seaAvail=0,sI0=0,src=0;const elig=[];
   for(let j=0;j<N;j++){
     const t=X[j]; sI0+=t.I; if(t.I>X[src].I)src=j;
     if(t.I>=1||t.H<1)continue;
-    airAvail+=AIRW[j]*(t.air?1:0.03);
-    if(SEAW[j])seaAvail+=SEAW[j]*(t.port?1:0.03);
+    elig.push(j);
+    airAvail+=AIRW[j]*(t.air?1:airCW);
+    if(SEAW[j])seaAvail+=SEAW[j]*(t.port?1:seaCW);
   }
   const airF=airAvail/AIRW_SUM,seaF=seaAvail/SEAW_SUM;
   for(let i=0;i<N;i++){
@@ -449,22 +540,26 @@ function step(){
     const f=r.I/c.pop;
     for(const j of c.nb){
       const t=X[j]; if(t.I>=1||t.H<1)continue;
-      let k=(0.5*f+r.I/2.5e7)*(1+0.5*st.live+0.4*st.insect+0.02*st.inf);
-      if(!r.border||!t.border)k*=0.04;
+      let k=(0.5*f+r.I/2.5e7)*(1+0.4*st.live+0.4*st.insect+0.02*st.infN);
+      if(!r.border||!t.border)k*=landCW;
       if(Math.random()<1-Math.exp(-k))seed(j,i,'land');
     }
     if(airAvail>0){
-      const la=(0.04*f*(0.3+c.w)+r.I/4e7)*(1+0.9*st.air)*(r.air?1:0.03)*airF;
-      if(Math.random()<1-Math.exp(-la)){const j=pick(AIRW,'air',i);if(j>=0)seed(j,i,'air');}
+      const la=(0.04*f*(0.3+c.w)+r.I/4e7)*(1+0.9*st.air+0.8*st.airx)*(r.air?1:airCW)*airF;
+      if(Math.random()<1-Math.exp(-la)){const j=pick(AIRW,'air',i,airCW);if(j>=0)seed(j,i,'air');}
     }
     if(c.coast&&seaAvail>0){
-      const ls=(0.03*f+r.I/6e7)*(1+0.9*st.water)*(r.port?1:0.03)*seaF;
-      if(Math.random()<1-Math.exp(-ls)){const j=pick(SEAW,'port',i);if(j>=0)seed(j,i,'sea');}
+      const ls=(0.03*f+r.I/6e7)*(1+0.9*st.water+0.6*st.sea)*(r.port?1:seaCW)*seaF;
+      if(Math.random()<1-Math.exp(-ls)){const j=pick(SEAW,'port',i,seaCW);if(j>=0)seed(j,i,'sea');}
+    }
+    if(st.bird>0&&f>0.02&&elig.length&&Math.random()<0.015*st.bird*f){
+      const j=elig[Math.floor(Math.random()*elig.length)];
+      if(X[j].I<1&&X[j].H>=1)seed(j,i,'bird');
     }
   }
   const F=sI0/TOTAL;
   if(F>0.02){
-    for(let j=0;j<N;j++){
+    for(const j of elig){
       const t=X[j]; if(t.I>=1||t.H<1)continue;
       const p=0.03*F*(1+0.4*st.air+0.4*st.water)*((t.air||t.port)?1:0.3);
       if(Math.random()<p)seed(j,src,C[j].coast&&Math.random()<0.4?'sea':'air');
@@ -474,30 +569,31 @@ function step(){
   for(const r of X){sH+=r.H;sI+=r.I;sD+=r.D;}
   for(let i=0;i<N;i++){
     const r=X[i],c=C[i];
-    r.alarm=Math.min(1,(r.I/c.pop)*(0.1+st.sev*0.06)+(r.D/c.pop)*10+(S.research?S.cure/100*0.25:0));
+    r.alarm=Math.min(1,(r.I/c.pop)*(0.1+st.sevN*0.06)*(1-0.25*st.latent)+(r.D/c.pop)*10+(S.research?S.cure/100*0.25:0));
     if(!S.research)continue;
     const a=r.alarm*d.aware,big=c.pop>=5e7;
-    if(r.air&&a>0.12-c.w*0.08){r.air=false;if(big)news(`${c.name} 关闭了全部机场`,'close');}
-    if(r.port&&a>0.18-c.w*0.1){r.port=false;if(big)news(`${c.name} 关闭了港口`,'close');}
-    if(r.border&&a>0.28-c.w*0.12){r.border=false;if(big)news(`${c.name} 封锁了陆地边境`,'close');}
+    if(r.air&&a>0.12-c.w*0.08){r.air=false;ev({k:'close',i,big});if(big)news(`${c.name} 关闭了全部机场`,'close');}
+    if(r.port&&a>0.18-c.w*0.1){r.port=false;ev({k:'close',i,big});if(big)news(`${c.name} 关闭了港口`,'close');}
+    if(r.border&&a>0.28-c.w*0.12){r.border=false;ev({k:'close',i,big});if(big)news(`${c.name} 封锁了陆地边境`,'close');}
   }
   if(!S.research){
-    let a=0; for(let i=0;i<N;i++)a+=X[i].I*(0.5+st.sev)*(0.4+C[i].w)/1.5e7;
-    a*=(1-0.3*Math.min(2,st.camo));
+    let a=0; for(let i=0;i<N;i++)a+=X[i].I*(0.5+st.sevN)*(0.4+C[i].w)/1.5e7;
+    a*=(1-0.3*Math.min(2,st.camo))*(1-0.2*st.latent);
     a+=nD/2e4+(sI/TOTAL)*3*(1-0.25*Math.min(2,st.camo));
     S.aware+=a*d.aware;
-    if(S.aware>=100){S.research=true;news('国际卫生组织确认出现新型病原体，全球疫苗研发启动','cure');}
+    if(S.aware>=100){S.research=true;S.researchDay=S.day;ev({k:'research'});news('国际卫生组织确认出现新型病原体，全球疫苗研发启动','cure');}
   } else {
     let work=0,base=0; for(let i=0;i<N;i++){work+=(X[i].H+0.7*X[i].I)*C[i].w;base+=C[i].pop*C[i].w;}
-    const panic=Math.min(1,sD/TOTAL*4+(sI/TOTAL)*st.sev*0.03);
-    const rate=0.7*(work/base)*(1+st.sev*0.025)*(1+panic)*d.cure/(1+0.4*st.shuf);
+    const panic=Math.min(1,sD/TOTAL*4+(sI/TOTAL)*st.sevN*0.03);
+    const rate=0.7*(work/base)*(1+st.sevN*0.025)*(1+panic)*d.cure/(1+0.4*st.shuf);
     S.cure=Math.min(100,S.cure+rate);
-    while(S.cms<CURE_MS.length&&S.cure>=CURE_MS[S.cms]){news(`疫苗研发进度达到 ${CURE_MS[S.cms]}%`,'cure');S.cms++;}
+    while(S.cms<CURE_MS.length&&S.cure>=CURE_MS[S.cms]){news(`疫苗研发进度达到 ${CURE_MS[S.cms]}%`,'cure');ev({k:'cure'});S.cms++;}
   }
-  while(S.dms<DEATH_MS.length&&sD>=DEATH_MS[S.dms][0]){news(DEATH_MS[S.dms][1],'dead');S.dms++;}
+  while(S.dms<DEATH_MS.length&&sD>=DEATH_MS[S.dms][0]){news(DEATH_MS[S.dms][1],'dead');ev({k:'dead'});S.dms++;}
   while(S.gms<GMS.length&&sI+sD>=GMS[S.gms]){S.gms++;S.pts+=2;}
-  S.acc+=nI/6e7+nD/4e7+0.12;
+  S.acc+=(nI/6e7+nD/2.2e7)*(1+0.3*st.mut)+0.15;
   while(S.acc>=1){S.acc-=1;S.pts++;}
+  S.hist.push([S.day,sH/TOTAL,sI/TOTAL,sD/TOTAL,S.cure/100]);
   if(sH<1&&sI<1){S.over=true;S.result='win';}
   else if(sI<1&&sH<d.spare&&S.cure<100){S.over=true;S.result='nearwin';S.survivors=sH;}
   else if(S.cure>=100){S.over=true;S.result='cure';news('疫苗完成，开始在全球分发','cure');}
@@ -510,12 +606,54 @@ const NS='http://www.w3.org/2000/svg';
 const svg=$('#map'),sweepEl=$('#sweep');
 const W=WORLD.w,H=WORLD.h;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let shapes=[],fxLayer=null,hl=null,flights=[],pings=[],waitingStart=false,selDiff='casual',lastSpeed=1,mapW=0;
-let lastDay=-1,lastPts=-1;
+let shapes=[],fxLayer=null,flashLayer=null,hl=null,glowBlur=null,flights=[],pings=[],flashes=[];
+let waitingStart=false,selDiff='casual',lastSpeed=1,mapW=0,lastDay=-1,lastPts=-1,endShown=false;
+let labelG=null,labels=[],showLabels=true,layoutW=0;
+let chipEls={},traceEls=[],viaEls=[],selTrait=null,lastDetail='';
 const vb={x:0,y:0,w:W,h:H};
 
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
 function fmt(n){n=Math.max(0,n);if(n>=1e8)return (n/1e8).toFixed(2)+'亿';if(n>=1e4)return (n/1e4).toFixed(n>=1e6?0:1)+'万';return String(Math.round(n));}
+
+/* synthesized sound: everything is generated with oscillators, nothing is downloaded */
+const AU={ctx:null,master:null,on:true,last:{}};
+try{AU.on=localStorage.getItem('terminal-strain-sound')!=='off';}catch(_){}
+function auInit(){
+  if(!AU.on)return;
+  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume().catch(()=>{});return;}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  try{AU.ctx=new AC();AU.master=AU.ctx.createGain();AU.master.gain.value=0.16;AU.master.connect(AU.ctx.destination);}catch(_){AU.ctx=null;}
+}
+function tone(freq,dur,type,vol,delay,slideTo){
+  const c=AU.ctx;if(!c)return;
+  const t=c.currentTime+(delay||0),o=c.createOscillator(),g=c.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+  if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.5,t+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(AU.master);o.start(t);o.stop(t+dur+0.03);
+}
+const SFX_GAP={ping:3500,reach:220,lock:600,click:40};
+function sfx(name){
+  if(!AU.on||!AU.ctx||AU.ctx.state!=='running')return;
+  const now=performance.now(),gap=SFX_GAP[name]||0;
+  if(gap&&now-(AU.last[name]||0)<gap)return;
+  AU.last[name]=now;
+  switch(name){
+    case 'click':tone(1800,0.035,'square',0.12);break;
+    case 'evolve':tone(440,0.1,'triangle',0.5);tone(660,0.1,'triangle',0.5,0.07);tone(990,0.18,'triangle',0.5,0.14);break;
+    case 'deny':tone(170,0.14,'square',0.25);break;
+    case 'ping':tone(1300,0.6,'sine',0.25,0,1180);break;
+    case 'reach':tone(760,0.06,'triangle',0.28);tone(560,0.09,'triangle',0.22,0.05);break;
+    case 'lock':tone(520,0.12,'square',0.16);tone(390,0.16,'square',0.16,0.13);break;
+    case 'alert':tone(330,0.55,'sawtooth',0.2,0,760);tone(330,0.55,'sawtooth',0.2,0.6,760);break;
+    case 'cure':tone(880,0.3,'sine',0.35,0,440);break;
+    case 'toll':tone(110,1.4,'sine',0.45);tone(220,0.9,'triangle',0.12);break;
+    case 'start':tone(220,0.35,'sawtooth',0.22,0,880);tone(880,0.2,'square',0.14,0.33);break;
+    case 'win':[196,247,294,392].forEach((f,k)=>tone(f,1,'triangle',0.3,k*0.12));break;
+    case 'lose':[392,330,262,196].forEach((f,k)=>tone(f,0.55,'sine',0.3,k*0.18));break;
+  }
+}
+function sndLabel(){const b=$('#snd');b.setAttribute('aria-pressed',String(AU.on));b.textContent=AU.on?'音效 开':'音效 关';}
 
 const HC=[10,28,17],AC=[255,178,46],RC=[255,59,59],DC=[22,7,5];
 function mix(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
@@ -532,10 +670,19 @@ function fillFor(i){
 function buildMap(){
   svg.innerHTML='';shapes=[];
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const defs=el('defs',{},svg);
+  const og=el('radialGradient',{id:'ocean',cx:'50%',cy:'46%',r:'62%'},defs);
+  [['0','#08361c'],['.55','#041c0f'],['1','#020805']].forEach(([o,c])=>el('stop',{offset:o,'stop-color':c},og));
+  const fl=el('filter',{id:'coast',x:'-3%',y:'-3%',width:'106%',height:'106%','color-interpolation-filters':'sRGB'},defs);
+  glowBlur=el('feGaussianBlur',{in:'SourceAlpha',stdDeviation:'2',result:'b'},fl);
+  el('feFlood',{'flood-color':'#39ff7a','flood-opacity':'.5',result:'f'},fl);
+  el('feComposite',{in:'f',in2:'b',operator:'in',result:'g'},fl);
+  const mg=el('feMerge',{},fl);el('feMergeNode',{in:'g'},mg);el('feMergeNode',{in:'SourceGraphic'},mg);
   el('rect',{x:-50,y:-50,width:W+100,height:H+100,fill:'#020604'},svg);
+  if(WORLD.o)el('path',{d:WORLD.o,fill:'url(#ocean)'},svg);
   if(WORLD.g)el('path',{d:WORLD.g,class:'grat'},svg);
   if(WORLD.o)el('path',{d:WORLD.o,class:'sph'},svg);
-  const cg=el('g',{},svg);
+  const cg=el('g',{filter:'url(#coast)'},svg);
   const dg=el('g',{},svg);
   C.forEach((c,i)=>{
     const s={};
@@ -543,6 +690,7 @@ function buildMap(){
     if(c.area<6){s.dot=el('circle',{cx:c.x,cy:c.y,r:2.4,class:'ct tiny','data-i':i},dg);el('title',{},s.dot).textContent=c.name;}
     shapes.push(s);
   });
+  flashLayer=el('g',{},svg);
   labelG=el('g',{class:'labels'},svg);labels=[];
   C.forEach((c,i)=>{
     const tier=c.area>2500?0:c.area>250?1:2,tiny=c.area<6;
@@ -566,10 +714,14 @@ function paintMap(){
   }
 }
 
-function applyVB(){svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);$('#zread').textContent=`缩放 ×${(W/vb.w).toFixed(1)}`;updateLabels();}
-let labelG=null,labels=[],showLabels=true,layoutW=0;
-const TIER_PX=[13,11.5,10],ZL=[1,1.5,2.25,3.4,5,7.5,12];
 function mapPxWidth(){return svg.getBoundingClientRect().width||svg.clientWidth||800;}
+function applyVB(){
+  svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  if(glowBlur)glowBlur.setAttribute('stdDeviation',(2.4*vb.w/(mapW||mapPxWidth())).toFixed(3));
+  $('#zread').textContent=`缩放 ×${(W/vb.w).toFixed(1)}`;
+  updateLabels();
+}
+const TIER_PX=[13,11.5,10],ZL=[1,1.5,2.25,3.4,5,7.5,12];
 function layoutLabels(){
   const cw=mapPxWidth();layoutW=cw;
   const order=C.map((c,i)=>i).sort((a,b)=>(C[b].area+C[b].pop/2e6)-(C[a].area+C[a].pop/2e6));
@@ -589,7 +741,7 @@ function layoutLabels(){
 }
 function updateLabels(){
   if(!labelG)return;
-  const z=W/vb.w,unit=vb.w/mapPxWidth();
+  const z=W/vb.w,unit=vb.w/(mapW||mapPxWidth());
   labelG.style.setProperty('--u',unit+'px');
   labelG.style.display=showLabels?'':'none';
   for(const l of labels){const v=l.min<=z*1.001;if(v!==l.v){l.v=v;l.t.style.display=v?'':'none';}}
@@ -635,32 +787,48 @@ function endPtr(e,click){
 }
 svg.addEventListener('pointerup',e=>endPtr(e,true));
 svg.addEventListener('pointercancel',e=>endPtr(e,false));
-$('#zin').addEventListener('click',()=>zoomAt(1.5,vb.x+vb.w/2,vb.y+vb.h/2));
-$('#zout').addEventListener('click',()=>zoomAt(1/1.5,vb.x+vb.w/2,vb.y+vb.h/2));
-$('#zreset').addEventListener('click',()=>{vb.x=0;vb.y=0;vb.w=W;vb.h=H;applyVB();});
+$('#zin').addEventListener('click',()=>{sfx('click');zoomAt(1.5,vb.x+vb.w/2,vb.y+vb.h/2);});
+$('#zout').addEventListener('click',()=>{sfx('click');zoomAt(1/1.5,vb.x+vb.w/2,vb.y+vb.h/2);});
+$('#zreset').addEventListener('click',()=>{sfx('click');vb.x=0;vb.y=0;vb.w=W;vb.h=H;applyVB();});
 
+/* transmission trails, arrival flashes, lockdown flashes */
 function spawnFlight(f){
   const A=C[f.from],B=C[f.to];
   const dist=Math.hypot(B.x-A.x,B.y-A.y);
   const mx=(A.x+B.x)/2,my=(A.y+B.y)/2-(f.how==='land'?dist*0.1:dist*0.3);
   const path=el('path',{d:`M${A.x},${A.y} Q${mx},${my} ${B.x},${B.y}`,class:'trail '+f.how},fxLayer);
   const dot=el('circle',{r:3,class:'dot '+f.how,cx:A.x,cy:A.y},fxLayer);
-  flights.push({A,B,mx,my,path,dot,t:reduceMotion?1:0});
-  if(flights.length>40){const o=flights.shift();o.path.remove();o.dot.remove();}
+  flights.push({A,B,mx,my,path,dot,t:reduceMotion?1:0,to:f.to,first:f.first,arrived:false});
+  if(flights.length>40){const o=flights.shift();arrive(o);o.path.remove();o.dot.remove();}
 }
+function arrive(f){if(f.arrived)return;f.arrived=true;if(f.first){flash(f.to,'inf');sfx('reach');}}
 function animFlights(dt){
   for(let k=flights.length-1;k>=0;k--){
     const f=flights[k];f.t+=dt/1.3;const t=Math.min(1,f.t),u=1-t;
     f.dot.setAttribute('cx',u*u*f.A.x+2*u*t*f.mx+t*t*f.B.x);
     f.dot.setAttribute('cy',u*u*f.A.y+2*u*t*f.my+t*t*f.B.y);
     f.path.style.opacity=Math.max(0,1-Math.max(0,f.t-0.6));
+    if(f.t>=1)arrive(f);
     if(f.t>=1.9){f.path.remove();f.dot.remove();flights.splice(k,1);}
   }
 }
-function clearFx(){flights.forEach(f=>{f.path.remove();f.dot.remove();});flights=[];pings.forEach(p=>p.e.remove());pings=[];}
+function flash(i,kind){
+  if(!flashLayer||flashes.length>=60)return;
+  const c=C[i];
+  const e=c.d&&c.area>=6?el('path',{d:c.d,class:'flash '+kind},flashLayer):el('circle',{cx:c.x,cy:c.y,r:5,class:'flash '+kind},flashLayer);
+  flashes.push({e,t:reduceMotion?0.6:0});
+}
+function animFlashes(dt){
+  for(let k=flashes.length-1;k>=0;k--){
+    const f=flashes[k];f.t+=dt/1.4;
+    if(f.t>=1){f.e.remove();flashes.splice(k,1);continue;}
+    f.e.style.opacity=String(Math.pow(1-f.t,1.6));
+  }
+}
+function clearFx(){flights.forEach(f=>{f.path.remove();f.dot.remove();});flights=[];pings.forEach(p=>p.e.remove());pings=[];flashes.forEach(f=>f.e.remove());flashes=[];}
 
 /* radar sweep: a phosphor scan line crosses the screen; infected countries return an echo as it passes */
-const SWEEP_SECONDS=4.5;let sweepT=0,prevSX=null;
+const SWEEP_SECONDS=4.5;let sweepT=0,prevSX=null,sweepPinged=false;
 function ping(i){
   if(pings.length>70)return;
   const r=S.c[i],s=Math.min(1,Math.sqrt(r.I/Math.max(1,r.H+r.I)));
@@ -669,12 +837,12 @@ function ping(i){
 function sweepTick(dt,moving){
   if(reduceMotion)return;
   const w=mapW||mapPxWidth();
-  if(moving)sweepT=(sweepT+dt/SWEEP_SECONDS)%1;
+  if(moving){const n=(sweepT+dt/SWEEP_SECONDS)%1;if(n<sweepT){sweepPinged=false;prevSX=null;}sweepT=n;}
   const edge=sweepT*(w+130);
   sweepEl.style.transform=`translateX(${edge-130}px)`;
   const sx=vb.x+edge/w*vb.w;
   if(moving&&prevSX!==null&&sx>prevSX&&S.started&&!S.over){
-    for(let i=0;i<N;i++){if(S.c[i].I>=1&&C[i].x>prevSX&&C[i].x<=sx)ping(i);}
+    for(let i=0;i<N;i++){if(S.c[i].I>=1&&C[i].x>prevSX&&C[i].x<=sx){ping(i);if(!sweepPinged){sweepPinged=true;sfx('ping');}}}
   }
   prevSX=sx;
 }
@@ -688,35 +856,103 @@ function animPings(dt){
   }
 }
 
-function fxText(fx){
-  const L={inf:'感染',sev:'严重',leth:'致死'};const out=[];
-  for(const k of ['inf','sev','leth'])if(fx[k])out.push(`${L[k]} +${fx[k]}`);
-  if(fx.air)out.push('空气传播');if(fx.water)out.push('水源传播');if(fx.insect)out.push('蚊虫传播');if(fx.live)out.push('禽畜传播');
-  if(fx.heat)out.push('炎热国家');if(fx.cold)out.push('寒冷国家');if(fx.drug)out.push('富裕国家');if(fx.camo)out.push('察觉变慢');if(fx.shuf)out.push('研发变慢');
-  return out.join(' · ');
+/* circuit-board evolution tree */
+const BCW=78,BRH=58,BNW=62,BNH=38,BPX=42,BPY=50;
+function bx(c){return BPX+c*BCW;}
+function by(r){return BPY+r*BRH;}
+function routeOf(a,b){
+  const sx=bx(a[0]),sy=by(a[1]),tx=bx(b[0]),ty=by(b[1]),y1=sy+BRH/2,y2=ty-BRH/2;
+  if(y2-y1<1)return [[sx,sy],[sx,y1],[tx,y1],[tx,ty]];
+  const chx=Math.abs(b[0]-a[0])>=1?(sx+tx)/2:sx+(b[0]>=a[0]?1:-1)*BCW/2;
+  return [[sx,sy],[sx,y1],[chx,y1],[chx,y2],[tx,y2],[tx,ty]];
 }
+function bends(pts){
+  const out=[];
+  for(let k=1;k<pts.length-1;k++){
+    const a=pts[k-1],b=pts[k],c=pts[k+1];
+    const d1=[Math.sign(b[0]-a[0]),Math.sign(b[1]-a[1])],d2=[Math.sign(c[0]-b[0]),Math.sign(c[1]-b[1])];
+    if((d1[0]||d1[1])&&(d2[0]||d2[1])&&(d1[0]!==d2[0]||d1[1]!==d2[1]))out.push(b);
+  }
+  return out;
+}
+function chipState(t){return S.traits.has(t.id)?'owned':!unlocked(t)?'locked':S.pts>=t.cost?'avail':'unl';}
 function renderTraits(){
-  const box=$('#traits');box.innerHTML='';
-  TRAITS.filter(t=>t.tab===S.tab).forEach(t=>{
-    const b=document.createElement('button');b.type='button';b.className='trait';b.dataset.id=t.id;b.id='t-'+t.id;
-    b.innerHTML=`<span class="tn">${t.name}</span><span class="tc">${t.cost}</span><span class="td">${t.desc}</span><span class="tfx">${fxText(t.fx)}</span><span class="treq"></span>`;
-    b.addEventListener('click',()=>{if(buy(t.id)){updateTraits();render(true);}});
-    box.appendChild(b);
+  const list=TRAITS.filter(t=>t.tab===S.tab);
+  const maxR=Math.max(...list.map(t=>t.g[1]));
+  const Wb=BPX*2+4*BCW,Hb=by(maxR)+BNH/2+14;
+  let tr='',vi='',ch='';
+  for(const t of list){
+    for(const q of t.req){
+      const alts=q.split('|');
+      for(const x of alts){
+        const pts=routeOf(TR[x].g,t.g);
+        tr+=`<path class="trace" data-from="${x}" data-to="${t.id}" data-or="${alts.length>1?1:0}" d="M${pts.map(p=>p[0]+','+p[1]).join('L')}"/>`;
+        for(const b of bends(pts))vi+=`<circle class="via" data-from="${x}" cx="${b[0]}" cy="${b[1]}" r="2.6"/>`;
+      }
+    }
+    const hw=BNW/2,hh=BNH/2;
+    ch+=`<g transform="translate(${bx(t.g[0])},${by(t.g[1])})"><g class="chip" id="chip-${t.id}" data-id="${t.id}" tabindex="0" role="button" aria-label="${t.name}，${t.cost} 点"><rect class="body" x="${-hw}" y="${-hh}" width="${BNW}" height="${BNH}" rx="3"/><path class="pin" d="M-22,${-hh}v-4M-11,${-hh}v-4M11,${-hh}v-4M22,${-hh}v-4M-22,${hh}v4M-11,${hh}v4M11,${hh}v4M22,${hh}v4"/><text class="lab" y="-6">${t.s}</text><text class="cost" y="10">${t.cost}</text></g></g>`;
+  }
+  const head=TABS[S.tab].cols.map((n,k)=>`<text class="colh" x="${bx(k)}" y="22">${n}</text>`).join('');
+  const box=$('#traits');
+  box.innerHTML=`<svg class="board" viewBox="0 0 ${Wb} ${Hb}" role="group" aria-label="${TABS[S.tab].name}进化电路板">${head}<g>${tr}</g><g>${vi}</g><g>${ch}</g></svg>`;
+  chipEls={};
+  box.querySelectorAll('.chip').forEach(g=>{
+    const id=g.dataset.id;chipEls[id]=g;
+    g.addEventListener('click',()=>selectTrait(id));
+    g.addEventListener('dblclick',()=>doBuy(id));
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(selTrait===id)doBuy(id);else selectTrait(id);}});
   });
+  traceEls=[...box.querySelectorAll('.trace')];viaEls=[...box.querySelectorAll('.via')];
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===S.tab)));
-  updateTraits();
+  lastDetail='';updateTraits();
 }
 function updateTraits(){
-  for(const b of $('#traits').children){
-    const t=TR[b.dataset.id],owned=S.traits.has(t.id),unl=unlocked(t);
-    b.classList.toggle('owned',owned);b.classList.toggle('locked',!owned&&!unl);b.classList.toggle('poor',!owned&&unl&&S.pts<t.cost);
-    b.setAttribute('aria-disabled',String(!canBuy(t)));
-    b.querySelector('.treq').textContent=owned?'已进化':!unl?'需要：'+t.req.map(q=>q.split('|').map(x=>TR[x].name).join(' 或 ')).join('，'):S.pts<t.cost?`还差 ${t.cost-S.pts} 点`:'';
+  for(const id in chipEls)chipEls[id].setAttribute('class','chip '+chipState(TR[id])+(selTrait===id?' sel':''));
+  for(const p of traceEls){
+    const on=S.traits.has(p.dataset.from),done=S.traits.has(p.dataset.to);
+    p.setAttribute('class','trace'+(p.dataset.or==='1'?' or':'')+(on?' on':'')+(on&&!done?' flow':''));
   }
+  for(const v of viaEls)v.setAttribute('class','via'+(S.traits.has(v.dataset.from)?' on':''));
   for(const tab of ['trans','sym','abil']){
     const all=TRAITS.filter(t=>t.tab===tab);$('#cnt-'+tab).textContent=`${all.filter(t=>S.traits.has(t.id)).length}/${all.length}`;
   }
+  renderDetail();
 }
+const FXL={air:'空气传播',water:'水源传播',insect:'虫媒传播',live:'动物传播',contact:'接触传播',rich:'富裕国家传播',sea:'海运传播',airx:'航班传播',leak:'穿透封锁',bird:'远距离迁徙传播',heat:'炎热国家',cold:'寒冷国家',drug:'抗药',harden:'气候适应',camo:'察觉变慢',latent:'封锁推迟',mut:'变异点 +30%',shuf:'研发变慢'};
+function fxText(fx){
+  const out=[];
+  for(const k of ['inf','sev','leth'])if(fx[k])out.push(`${{inf:'感染',sev:'严重',leth:'致死'}[k]} +${fx[k]}`);
+  for(const k in FXL)if(fx[k])out.push(FXL[k]+(fx[k]<1?'（弱）':''));
+  return out.join(' · ');
+}
+function renderDetail(){
+  const box=$('#tdetail');
+  let html;
+  if(!selTrait||TR[selTrait].tab!==S.tab){
+    html='<p class="empty">点一块芯片查看技能详情，再按「进化」购买；也可以双击芯片直接进化。亮绿边框表示现在就能进化，金色表示已进化，亮起的线路通向下一个可解锁的技能。</p>';
+  } else {
+    const t=TR[selTrait],st=chipState(t);
+    const req=t.req.length?t.req.map(q=>q.split('|').map(x=>TR[x].name).join(' 或 ')).join('，'):'无';
+    const btn=st==='owned'?['已进化',1]:st==='locked'?['未解锁',1]:st==='unl'?[`还差 ${t.cost-S.pts} 点`,1]:[`进化 −${t.cost}`,0];
+    html=`<div class="tdh"><b>${t.name}</b><span class="tc">${t.cost}</span></div><p class="td">${t.desc}</p><p class="tfx">${fxText(t.fx)}</p><p class="treq">前置：${req}</p><button type="button" class="evo" id="tdBuy"${btn[1]?' disabled':''}>${btn[0]}</button>`;
+  }
+  if(html===lastDetail)return;
+  const hadFocus=document.activeElement&&document.activeElement.id==='tdBuy';
+  box.innerHTML=html;lastDetail=html;
+  const b=$('#tdBuy');
+  if(b){b.addEventListener('click',()=>doBuy(selTrait));if(hadFocus)b.focus();}
+}
+function selectTrait(id){selTrait=id;sfx('click');updateTraits();}
+function doBuy(id){
+  if(buy(id)){
+    sfx('evolve');selTrait=id;
+    const g=chipEls[id];
+    if(g&&g.animate&&!reduceMotion)g.animate([{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:450,easing:'cubic-bezier(.2,.8,.2,1)'});
+    updateTraits();render(true);
+  } else sfx('deny');
+}
+
 function renderLog(){
   const ol=$('#log');
   ol.innerHTML=S.log.length?S.log.map(e=>`<li class="${e.kind}"><span>D+${e.d}</span><div>${e.text}</div></li>`).join(''):'<li><span>D+0</span><div>全球一切如常。</div></li>';
@@ -752,7 +988,7 @@ function render(force){
   else{$('#cureTxt').textContent='未启动';$('#bC').style.width='0%';$('#cureNote').textContent=S.started?`察觉度 ${Math.min(99,S.aware).toFixed(0)}%`:'';}
   const st=stats();
   $('#vInf').textContent=st.inf;$('#vSev').textContent=st.sev;$('#vLeth').textContent=st.leth;
-  $('#mInf').style.width=Math.min(100,st.inf/63*100)+'%';$('#mSev').style.width=Math.min(100,st.sev/52*100)+'%';$('#mLeth').style.width=Math.min(100,st.leth/47*100)+'%';
+  $('#mInf').style.width=Math.min(100,st.inf/MAXS.inf*100)+'%';$('#mSev').style.width=Math.min(100,st.sev/MAXS.sev*100)+'%';$('#mLeth').style.width=Math.min(100,st.leth/MAXS.leth*100)+'%';
   if(force||S.day!==lastDay||S.pts!==lastPts){paintMap();updateTraits();renderRegion();lastDay=S.day;lastPts=S.pts;}
   if(S.logDirty)renderLog();
 }
@@ -760,11 +996,27 @@ function render(force){
 function scanLabel(){$('#scanState').textContent=!S.started?'待命':S.over?'监测结束':S.speed?'扫描中':'已暂停';}
 function setSpeed(s){S.speed=s;if(s>0)lastSpeed=s;for(let k=0;k<4;k++)$('#sp'+k).setAttribute('aria-pressed',String(k===s));scanLabel();}
 function onCountry(i,zoom){
-  if(waitingStart&&!S.started){startAt(i);waitingStart=false;$('#hint').hidden=true;setSpeed(1);}
+  if(waitingStart&&!S.started){startAt(i);waitingStart=false;$('#hint').hidden=true;setSpeed(1);flash(i,'inf');sfx('reach');}
   S.sel=i;hl.setAttribute('d',C[i].d||`M${C[i].x-3},${C[i].y}a3,3 0 1,0 6,0a3,3 0 1,0 -6,0`);
   $('#csel').value=String(i);
   if(zoom)focusOn(i);
   render(true);
+}
+
+/* outbreak trend chart for the ending screen: every line is a share of the world population, the vaccine line is its progress */
+function endChart(){
+  const h=S.hist;if(h.length<2)return '';
+  const Wc=460,Hc=180,L=40,R=14,T=12,B=26,maxD=Math.max(1,h[h.length-1][0]);
+  const X=d=>L+d/maxD*(Wc-L-R),Y=v=>T+(1-Math.max(0,Math.min(1,v)))*(Hc-T-B);
+  const every=Math.max(1,Math.floor(h.length/240));
+  const pts=h.filter((p,j)=>j%every===0||j===h.length-1);
+  const line=(k,cls)=>`<path class="${cls}" d="${pts.map((p,j)=>(j?'L':'M')+X(p[0]).toFixed(1)+','+Y(p[k]).toFixed(1)).join('')}"/>`;
+  let g='';
+  for(const v of [0,.25,.5,.75,1])g+=`<line class="eg" x1="${L}" x2="${Wc-R}" y1="${Y(v)}" y2="${Y(v)}"/>`;
+  for(const v of [0,.5,1])g+=`<text class="et" x="${L-6}" y="${Y(v)}" text-anchor="end" dominant-baseline="central">${v*100}%</text>`;
+  g+=`<text class="et" x="${L}" y="${Hc-8}" text-anchor="start">第 0 天</text><text class="et" x="${X(maxD/2)}" y="${Hc-8}" text-anchor="middle">第 ${Math.round(maxD/2)} 天</text><text class="et" x="${Wc-R}" y="${Hc-8}" text-anchor="end">第 ${maxD} 天</text>`;
+  if(S.researchDay!=null){const rx=X(S.researchDay),right=rx>Wc-90;g+=`<line class="er" x1="${rx}" x2="${rx}" y1="${T}" y2="${Hc-B}"/><text class="et" x="${right?rx-4:rx+4}" y="${T+10}" text-anchor="${right?'end':'start'}">研发启动</text>`;}
+  return `<svg class="echart" viewBox="0 0 ${Wc} ${Hc}" role="img" aria-label="疫情走势：健康、感染、死亡人口占比和疫苗进度随天数的变化">${g}${line(1,'l-h')}${line(2,'l-i')}${line(3,'l-d')}${line(4,'l-c')}</svg><div class="elegend"><span><i class="h"></i>健康</span><span><i class="i"></i>感染</span><span><i class="d2"></i>死亡</span><span><i class="c"></i>疫苗进度</span></div>`;
 }
 function survivorPlaces(){return S.c.map((r,i)=>[i,r.H]).filter(a=>a[1]>=1).sort((a,b)=>b[1]-a[1]).slice(0,3).map(a=>C[a[0]].name).join('、')||'海岛';}
 function showEnd(){
@@ -775,12 +1027,50 @@ function showEnd(){
     extinct:['菌株灭绝',`第 ${S.day} 天，最后一名感染者也不在了，${S.name} 没能延续下去。`,'提示：致死率太高时宿主死得比传播还快。先提升感染力，后加致命症状。','var(--muted)']}[S.result];
   $('#endTitle').textContent=t[0];$('#endTitle').style.color=t[3];$('#endText').textContent=t[1];$('#endTip').textContent=t[2];
   $('#eDay').textContent=S.day;$('#eDead').textContent=fmt(D);$('#eCure').textContent=S.cure.toFixed(1)+'%';
-  scanLabel();
+  $('#eChart').innerHTML=endChart();
+  scanLabel();sfx(S.result==='win'||S.result==='nearwin'?'win':'lose');
   $('#endOv').hidden=false;$('#againBtn').focus();
 }
 
-let last=performance.now(),acc=0,endShown=false;
+/* boot sequence on the start screen; any click or key skips it */
+const BOOT=[['终端自检','正常'],['载入世界地图：238 个国家和地区','完成'],['接入全球卫生监测网络','已连接'],['校准雷达扫描阵列','完成'],['警告：检测到未知菌株信号','']];
+let bootTimer=null;
+function runBoot(){
+  const pre=$('#boot'),body=$('#startBody');
+  const lines=BOOT.map(([a,b],k)=>({t:'> '+a+(b?' …… '+b:''),warn:k===BOOT.length-1}));
+  const span=l=>`<span${l.warn?' class="warn"':''}>`;
+  const paint=(n,partial)=>{
+    let s=lines.slice(0,n).map(l=>span(l)+l.t+'</span>').join('\n');
+    if(partial!=null)s+=(n?'\n':'')+span(lines[n])+partial+'</span><span class="cur">▌</span>';
+    pre.innerHTML=s;
+  };
+  const finish=()=>{if(bootTimer)clearTimeout(bootTimer);bootTimer=null;paint(lines.length,null);body.classList.remove('booting');};
+  if(reduceMotion){finish();return;}
+  body.classList.add('booting');
+  let li=0,ci=0;
+  const tick=()=>{
+    if(li>=lines.length){finish();return;}
+    const L=lines[li].t;ci+=2;
+    if(ci>=L.length){li++;ci=0;paint(li,null);bootTimer=setTimeout(tick,170);}
+    else{paint(li,L.slice(0,ci));bootTimer=setTimeout(tick,24);}
+  };
+  bootTimer=setTimeout(tick,200);
+  const skip=()=>{if(bootTimer)finish();};
+  $('#startOv').addEventListener('pointerdown',skip,{once:true});
+  document.addEventListener('keydown',skip,{once:true});
+}
+
+let last=performance.now(),acc=0;
 const DPS=[0,1,3,6];
+function consumeEvents(){
+  while(S.ev.length){
+    const e=S.ev.shift();
+    if(e.k==='close'){flash(e.i,'lock');if(e.big)sfx('lock');}
+    else if(e.k==='research')sfx('alert');
+    else if(e.k==='cure')sfx('cure');
+    else if(e.k==='dead')sfx('toll');
+  }
+}
 function frame(now){
   const dt=Math.min(0.25,(now-last)/1000);last=now;
   const running=S.started&&!S.over&&S.speed>0;
@@ -791,8 +1081,9 @@ function frame(now){
     while(S.fx.length)spawnFlight(S.fx.shift());
     if(S.over&&!endShown){endShown=true;setTimeout(showEnd,900);}
   }
+  consumeEvents();
   sweepTick(dt,running||!S.started);
-  animFlights(dt);animPings(dt);render(false);
+  animFlights(dt);animPings(dt);animFlashes(dt);render(false);
   requestAnimationFrame(frame);
 }
 
@@ -803,17 +1094,25 @@ function frame(now){
   sel.addEventListener('change',()=>{if(sel.value!=='')onCountry(+sel.value,true);});
   $('#nAll').textContent=N;
 })();
-document.querySelectorAll('[id^="sp"]').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.s)));
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;renderTraits();}));
-document.querySelectorAll('#diffSeg button').forEach(b=>b.addEventListener('click',()=>{selDiff=b.dataset.d;document.querySelectorAll('#diffSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+document.querySelectorAll('[id^="sp"]').forEach(b=>b.addEventListener('click',()=>{sfx('click');setSpeed(+b.dataset.s);}));
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{sfx('click');S.tab=b.dataset.tab;selTrait=null;renderTraits();}));
+document.querySelectorAll('#diffSeg button').forEach(b=>b.addEventListener('click',()=>{auInit();sfx('click');selDiff=b.dataset.d;document.querySelectorAll('#diffSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
 $('#startBtn').addEventListener('click',()=>{
+  auInit();sfx('start');
   newGame($('#pathName').value.trim()||'菌株-07',selDiff);
   $('#pname').textContent=S.name+' · '+DIFF[selDiff].name;
-  $('#startOv').hidden=true;$('#hint').hidden=false;waitingStart=true;endShown=false;acc=0;
+  $('#startOv').hidden=true;$('#hint').hidden=false;waitingStart=true;endShown=false;acc=0;selTrait=null;
   hl.setAttribute('d','');$('#csel').value='';
   clearFx();setSpeed(1);renderTraits();renderLog();render(true);
 });
-$('#againBtn').addEventListener('click',()=>{$('#endOv').hidden=true;$('#startOv').hidden=false;$('#pathName').focus();});
+$('#againBtn').addEventListener('click',()=>{sfx('click');$('#endOv').hidden=true;$('#startOv').hidden=false;$('#pathName').focus();});
+$('#snd').addEventListener('click',()=>{
+  AU.on=!AU.on;
+  try{localStorage.setItem('terminal-strain-sound',AU.on?'on':'off');}catch(_){}
+  if(AU.on){auInit();sfx('click');}
+  sndLabel();
+});
+document.addEventListener('pointerdown',()=>auInit(),{passive:true});
 document.addEventListener('keydown',e=>{
   if(/INPUT|SELECT/.test(e.target.tagName)||!S.started||S.over)return;
   if(e.key===' '&&e.target===document.body){e.preventDefault();setSpeed(S.speed?0:lastSpeed);}
@@ -823,9 +1122,10 @@ document.addEventListener('keydown',e=>{
 
 newGame('菌株-07','casual');
 buildMap();renderTraits();renderLog();render(true);
-mapW=mapPxWidth();layoutLabels();updateLabels();scanLabel();
-$('#zlab').addEventListener('click',e=>{showLabels=!showLabels;e.currentTarget.setAttribute('aria-pressed',String(showLabels));updateLabels();});
-if(window.ResizeObserver)new ResizeObserver(()=>{const w=mapPxWidth();mapW=w;if(Math.abs(w-layoutW)>20)layoutLabels();updateLabels();}).observe(svg);
-else window.addEventListener('resize',()=>{mapW=mapPxWidth();layoutLabels();updateLabels();});
+mapW=mapPxWidth();layoutLabels();applyVB();scanLabel();sndLabel();
+runBoot();
+$('#zlab').addEventListener('click',e=>{sfx('click');showLabels=!showLabels;e.currentTarget.setAttribute('aria-pressed',String(showLabels));updateLabels();});
+if(window.ResizeObserver)new ResizeObserver(()=>{const w=mapPxWidth();mapW=w;if(Math.abs(w-layoutW)>20)layoutLabels();applyVB();}).observe(svg);
+else window.addEventListener('resize',()=>{mapW=mapPxWidth();layoutLabels();applyVB();});
 requestAnimationFrame(frame);
 </script>
